@@ -28,8 +28,8 @@ def load():
             data['user_id']=''
         if 'user_code' not in data:
             data['user_code']=''
-        if 'last_update' not in data:
-            data['last_update'] = -1
+        if 'last_download' not in data:
+            data['last_download'] = -1
         if 'year_start' not in data:
             data['year_start'] = [0, 265, 525, 785, 1045, 1305, 1565, 1830, 2090, 2350, 2615, 2875, 3135, 3395, 3655, 3920, 4180, 4440, 4700, 4965, 5225]
 def save():

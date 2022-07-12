@@ -3,7 +3,7 @@ import urllib.request
 import urllib.error
 import xml.etree.ElementTree as et
 
-data = {}
+data = {'last_upload':0}
 last_error=''
 def load():
     global last_error

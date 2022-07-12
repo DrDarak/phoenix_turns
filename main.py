@@ -10,7 +10,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
     def __init__(self, icon, parent=None):
         QtWidgets.QSystemTrayIcon.__init__(self, icon, parent)
-        self.setToolTip(f'VFX Pipeline Application Build - 3.2.56')
+        self.setToolTip(f'Phoenix Turn Downloader')
         menu = QtWidgets.QMenu(parent)
         open_app = menu.addAction("Update Turns")
         open_app.triggered.connect(self.update_turns)
@@ -51,7 +51,7 @@ def main():
     w = QtWidgets.QWidget()
     tray_icon = SystemTrayIcon(QtGui.QIcon("phoenix_32x32.png"), w)
     tray_icon.show()
-    ##  tray_icon.showMessage('VFX Pipeline', 'Hello "Name of logged in ID')
+    ##  tray_icon.showMessage('Title', 'Hello "Name of logged in ID')
     app.exec_()
 
 
