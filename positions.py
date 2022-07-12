@@ -1,6 +1,7 @@
 import config as cfg
 import xml.etree.ElementTree as et
-from urllib import request as url
+import urllib.request
+import urllib.error
 
 class position:
     def __init__(self,data):
@@ -36,11 +37,24 @@ class position:
                                 self.data['turns'].append(int(val))
             else:
                 self.data[pos_data.tag]=pos_data.text
+
 pos_list=[]
+last_error=''
 
 def load():
-    data = url.urlopen('https://www.phoenixbse.com/index.php?a=xml&sa=pos_list&uid='+cfg.data['user_id']+'&code='+cfg.data['user_code'])
-    tree = et.parse(data)
+    global last_error
+    req= urllib.request.Request('https://www.phoenixbse.com/index.php?a=xml&sa=pos_list&uid='+cfg.data['user_id']+'&code='+cfg.data['user_code'])
+    xml_data=None
+    try:
+        xml_data=urllib.request.urlopen(req)
+    except urllib.error.URLError as e:
+        last_error=e.reason
+    if xml_data!=None:
+        process_data(xml_data)
+
+def process_data(xml_data):
+    global pos_list
+    tree = et.parse(xml_data)
     root = tree.getroot()
     for child in root:
         for data in child:
