@@ -1,6 +1,5 @@
-import os
 import sys
-from PySide2 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui
 from dialogs import *
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):

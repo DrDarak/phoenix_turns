@@ -17,7 +17,7 @@ def load(progress=None,finished=None):
         pos.load()
         if progress:
             progress.setRange(0,len(pos.pos_list))
-            progress.reset()
+            progress.setProperty("value", 0)
         cnt=0
         for p in pos.pos_list:
             last_turn=0
@@ -48,7 +48,7 @@ def load(progress=None,finished=None):
                     f.write(str(data, 'utf-8', 'ignore'))
                     f.close()
             if progress:
-                progress.setValue(cnt)
+                progress.setProperty("value", cnt)
                 cnt+=1
         cfg.save()
     if finished:

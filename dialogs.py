@@ -1,12 +1,13 @@
-from PyQt5.QtWidgets import QDialog,  QPushButton,QProgressBar,QSpinBox
-from PyQt5 import QtCore
+from PyQt5.QtWidgets import QDialog,  QPushButton,QProgressBar
+from PyQt5 import QtCore,QtGui
 import turns
 from threading import Thread
+
 
 class TurnUpdate_Dialog(QDialog):
     def __init__(self,parent=None):
         super().__init__(parent)
-    ##    if parent:
+        self.setWindowIcon(QtGui.QIcon("phoenix_32x32.png"))
         self.setModal(True)
         self.setWindowTitle("Download Turns")
         self.setObjectName("Dialog")
@@ -38,7 +39,7 @@ class TurnUpdate_Dialog(QDialog):
         self.doneButton.setEnabled(False)
         update_thread = Thread(target=turns.load,args=(self.progressBar,self.update_turns_finished))
         update_thread.start()
-        pass
+
     def update_turns_finished(self):
         self.updateButton.setEnabled(True)
         self.doneButton.setEnabled(True)
