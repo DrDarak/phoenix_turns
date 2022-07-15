@@ -5,7 +5,7 @@ import urllib.request
 import urllib.error
 import os
 from PyQt5.QtWidgets import QProgressBar
-import time
+
 last_error=''
 def load(progress=None,finished=None):
     global last_error
@@ -28,25 +28,26 @@ def load(progress=None,finished=None):
                 turn_day=p.data['turns'][0]
             # download file if there is a new one
             if turn_day>last_turn:
-                req = urllib.request.Request('https://www.phoenixbse.com/index.php?a=xml&sa=turn_data&tid='+p.data['num']+'&uid='+cfg.data['user_id']+'&code='+cfg.data['user_code'])
-                response = None
-                data=""
-                try:
-                    response = urllib.request.urlopen(req)
-                except urllib.error.URLError as e:
-                    last_error = e.reason
-                if response != None:
-                    data=response.read()
-                if data !="":
-                    # create directory tree
-                    day_path=cfg.position_path+str(turn_day)+'/'
-                    if not os.path.exists(day_path):
-                        os.makedirs(day_path)
-                    f = open(day_path+p.data['num']+'.html', 'w')
-                    # save downloaded file info
-                    cfg.data['positions'].update({p.data['num']:turn_day})
-                    f.write(str(data, 'utf-8', 'ignore'))
-                    f.close()
+                req = cfg.phoenix_request('turn_data&tid='+p.data['num'])
+                if req != None:
+                    response = None
+                    data=""
+                    try:
+                        response = urllib.request.urlopen(req)
+                    except urllib.error.URLError as e:
+                        last_error = e.reason
+                    if response != None:
+                        data=response.read()
+                    if data !="":
+                        # create directory tree
+                        day_path=cfg.position_path+str(turn_day)+'/'
+                        if not os.path.exists(day_path):
+                            os.makedirs(day_path)
+                        f = open(day_path+p.data['num']+'.html', 'w')
+                        # save downloaded file info
+                        cfg.data['positions'].update({p.data['num']:turn_day})
+                        f.write(str(data, 'utf-8', 'ignore'))
+                        f.close()
             if progress:
                 progress.setProperty("value", cnt)
                 cnt+=1

@@ -43,14 +43,15 @@ last_error=''
 
 def load():
     global last_error
-    req= urllib.request.Request('https://www.phoenixbse.com/index.php?a=xml&sa=pos_list&uid='+cfg.data['user_id']+'&code='+cfg.data['user_code'])
-    xml_data=None
-    try:
-        xml_data=urllib.request.urlopen(req)
-    except urllib.error.URLError as e:
-        last_error=e.reason
-    if xml_data!=None:
-        process_data(xml_data)
+    req=cfg.phoenix_request('pos_list')
+    if req!=None:
+        xml_data=None
+        try:
+            xml_data=urllib.request.urlopen(req)
+        except urllib.error.URLError as e:
+            last_error=e.reason
+        if xml_data!=None:
+            process_data(xml_data)
 
 def process_data(xml_data):
     global pos_list
