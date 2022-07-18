@@ -35,6 +35,8 @@ def load():
             data['year_start'] = [0, 265, 525, 785, 1045, 1305, 1565, 1830, 2090, 2350, 2615, 2875, 3135, 3395, 3655, 3920, 4180, 4440, 4700, 4965, 5225]
         if 'users' not in data:
             data['users']={}
+        if 'current_user' not in data:
+            data['current_user'] = 'None'
 
 ## Automatically run load as first action so config is present
 load()
@@ -44,7 +46,7 @@ def save():
     global data
     ##backup file when it changes and only allow none zero configs
     if len(data)>0:
-        if os.path.getsize(config_name)>0:
+        if os.path.exists(config_name):
             os.replace(config_name,target_path+'config.bak')
         f = open(config_name, 'w')
         f.write(json.dumps(data))
@@ -66,7 +68,10 @@ def login(user,password):
     except urllib.error.URLError as e:
         last_error = e.reason
     if response != None:
-        tree = et.parse(response)
+        try:
+            tree = et.parse(response)
+        except:
+            return False
         root = tree.getroot()
         uid=0
         code=''
@@ -77,12 +82,30 @@ def login(user,password):
                 code = child.text
         if uid>0 and code!='':
             data['users'][user]={'user_id':uid,'code':code}
+            data['current_user']=user
             save()
-
+            return True
+    return False
 def has_user():
     global data
     if 'current_user' in data:
         if user_id()>0 and user_code()!='':
+            return True
+    return False
+
+def user_position_path():
+    global position_path,data
+    return position_path + data['current_user']+'/'
+
+def set_current_user(user):
+    global data
+    if user != data['current_user']:
+        if user in data['users']:
+            data['current_user']=user
+            data['last_download'] = -1
+            save()
+            if not os.path.exists(user_position_path()):
+                os.makedirs(user_position_path())
             return True
     return False
 

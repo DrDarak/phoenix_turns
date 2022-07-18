@@ -1,6 +1,10 @@
 import sys
 from PyQt5 import QtWidgets, QtGui
 from dialogs import *
+import config as cfg
+from functools import partial
+
+
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     """
@@ -10,24 +14,41 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def __init__(self, icon, parent=None):
         QtWidgets.QSystemTrayIcon.__init__(self, icon, parent)
         self.setToolTip(f'Phoenix Turn Downloader')
-        menu = QtWidgets.QMenu(parent)
-        open_app = menu.addAction("Update Turns")
-        open_app.triggered.connect(self.update_turns)
+        self.menu = QtWidgets.QMenu(parent)
+
+        ## add user list
+        self.users=[]
+        for login in cfg.data['users']:
+            action = self.menu.addAction(login)
+            self.users.append(action)
+            action.triggered.connect(partial(self.change_user,login))
+        self.update_current_user()
+
+        self.separator=self.menu.addSeparator()
+
+        open_app = self.menu.addAction("Update Turns")
+        open_app.triggered.connect(self.update_turns_window)
         open_app.setIcon(QtGui.QIcon("phoenix_32x32.png"))
 
-        exit_ = menu.addAction("Exit")
+        self.login_action = self.menu.addAction("Login")
+        self.login_action.setIcon(QtGui.QIcon("phoenix_32x32.png"))
+        self.login_action.triggered.connect(self.login_window)
+
+        exit_ = self.menu.addAction("Exit")
         exit_.triggered.connect(lambda: sys.exit())
         exit_.setIcon(QtGui.QIcon("phoenix_32x32.png"))
 
-        menu.addSeparator()
-        self.setContextMenu(menu)
-        self.activated.connect(self.onTrayIconActivated)
+
+        self.setContextMenu(self.menu)
+        ##self.activated.connect(self.onTrayIconActivated)
 
         ## Start timer for processing turns
         ##self.timer_id=self.startTimer(10000,self.VeryCoarseTimer)
 
+
     def timerEvent(self, event):
         self.showMessage("60 sec","60 sec")
+
 
     def onTrayIconActivated(self, reason):
         """
@@ -40,7 +61,35 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         # if reason == self.Trigger:
         #     self.open_notepad()
 
-    def update_turns(self):
+    def change_user(self,user):
+        if cfg.set_current_user(user)==True:
+            self.update_current_user()
+
+    def options_window(self):
+        ##dlg = Login_Dialog()
+        ##dlg.exec_()
+        pass
+
+    def login_window(self):
+        old_user=cfg.data['current_user']
+        dlg =Login_Dialog()
+        dlg.exec_()
+        if old_user!=cfg.data['current_user']:
+            ## add new action to menu
+            action = QtWidgets.QAction(cfg.data['current_user'], self)
+            self.menu.insertAction(self.separator, action)
+            action.triggered.connect(lambda: self.change_user(cfg.data['current_user']))
+            self.users.append(action)
+            self.update_current_user()
+
+    def update_current_user(self):
+        for action in self.users:
+            if action.text()==cfg.data['current_user']:
+                action.setIcon(QtGui.QIcon("tick.png"))
+            else:
+                action.setIcon(QtGui.QIcon())
+
+    def update_turns_window(self):
         dlg=TurnUpdate_Dialog()
         dlg.show()
 

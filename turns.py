@@ -40,7 +40,7 @@ def load(progress=None,finished=None):
                         data=response.read()
                     if data !="":
                         # create directory tree
-                        day_path=cfg.position_path+str(turn_day)+'/'
+                        day_path=cfg.user_position_path()+str(turn_day)+'/'
                         if not os.path.exists(day_path):
                             os.makedirs(day_path)
                         f = open(day_path+p.data['num']+'.html', 'w')
