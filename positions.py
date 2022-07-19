@@ -1,4 +1,4 @@
-import config as cfg
+import phoenix_core as core
 import xml.etree.ElementTree as et
 import urllib.request
 import urllib.error
@@ -43,7 +43,7 @@ last_error=''
 
 def load():
     global last_error
-    req=cfg.phoenix_request('pos_list')
+    req=core.phoenix_request('pos_list')
     if req!=None:
         xml_data=None
         try:

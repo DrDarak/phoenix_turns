@@ -1,4 +1,4 @@
-import config as cfg
+import phoenix_core as core
 import urllib.request
 import urllib.error
 import xml.etree.ElementTree as et
@@ -7,7 +7,7 @@ data = {'last_upload':0}
 last_error=''
 def load():
     global last_error
-    req= cfg.phoenix_request('game_status')
+    req= core.phoenix_request('game_status')
     if req!=None:
         xml_data=None
         try:
@@ -39,9 +39,9 @@ def process_data(xml_data):
                 data['last_upload'] =data['current_day']-1
         if 'year_start' in data:
             year_start=int(data['year_start'])
-            if year_start not in cfg.data['year_start']:
-                cfg.data['year_start'].append(year_start)
-                cfg.save()
+            if year_start not in core.data['year_start']:
+                core.data['year_start'].append(year_start)
+                core.save()
 
 if __name__ == '__main__':
     load()

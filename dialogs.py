@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QDialog, QPushButton,QProgressBar,QLabel,QLineEdit,Q
 from PyQt5 import QtCore,QtGui
 import turns
 from threading import Thread
-import config as cfg
+import phoenix_core as core
 
 
 class TurnUpdate_Dialog(QDialog):
@@ -89,7 +89,7 @@ class Login_Dialog(QDialog):
     def login(self):
         txt = "No username or password."
         if self.username.text()!='' and self.password.text()!='':
-            ok=cfg.login(self.username.text(),self.password.text())
+            ok=core.login(self.username.text(),self.password.text())
             if ok:
                 self.accept()
                 return
@@ -102,5 +102,4 @@ class Login_Dialog(QDialog):
         msg.setText("Login failed: "+txt)
         msg.setWindowTitle("Login Failed")
         msg.setStandardButtons(QMessageBox.Ok)
-        #msg.buttonClicked.connect(msgbtn)
         msg.exec_()

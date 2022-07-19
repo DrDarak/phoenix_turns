@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import QtWidgets, QtGui
 from dialogs import *
-import config as cfg
+import phoenix_core as core
 from functools import partial
 
 
@@ -18,7 +18,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         ## add user list
         self.users=[]
-        for login in cfg.data['users']:
+        for login in core.data['users']:
             action = self.menu.addAction(login)
             self.users.append(action)
             action.triggered.connect(partial(self.change_user,login))
@@ -62,7 +62,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         #     self.open_notepad()
 
     def change_user(self,user):
-        if cfg.set_current_user(user)==True:
+        if core.set_current_user(user)==True:
             self.update_current_user()
 
     def options_window(self):
@@ -71,20 +71,20 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         pass
 
     def login_window(self):
-        old_user=cfg.data['current_user']
+        old_user=core.data['current_user']
         dlg =Login_Dialog()
         dlg.exec_()
-        if old_user!=cfg.data['current_user']:
+        if old_user!=core.data['current_user']:
             ## add new action to menu
-            action = QtWidgets.QAction(cfg.data['current_user'], self)
+            action = QtWidgets.QAction(core.data['current_user'], self)
             self.menu.insertAction(self.separator, action)
-            action.triggered.connect(lambda: self.change_user(cfg.data['current_user']))
+            action.triggered.connect(lambda: self.change_user(core.data['current_user']))
             self.users.append(action)
             self.update_current_user()
 
     def update_current_user(self):
         for action in self.users:
-            if action.text()==cfg.data['current_user']:
+            if action.text()==core.data['current_user']:
                 action.setIcon(QtGui.QIcon("tick.png"))
             else:
                 action.setIcon(QtGui.QIcon())
