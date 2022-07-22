@@ -25,6 +25,7 @@ class MyHTMLParser(HTMLParser):
         self.row_type=''
         self.col_data=[]
         self.row_cols = [] # current columns in row
+        self.underline=False
 
     def handle_starttag(self, tag, attrs):
         if tag == 'body':
@@ -39,6 +40,7 @@ class MyHTMLParser(HTMLParser):
             self.col_pos=-1
             self.row_type = ''
             self.col_data=[]
+            self.underline = False
         elif tag == 'td':
             self.col_pos+=1
             self.in_data = True
@@ -47,13 +49,11 @@ class MyHTMLParser(HTMLParser):
                     res = re.match("width:\s*(\d+)", a[1])
                     if res != None:
                         col = int(int(res.groups(0)[0]) / 1.25 + 0.95) # reverses 100%=>80 lines correctly
-                        ## make col pos cumulative
-                        col_len=len(self.cols[self.lvl])
-                        ##if col_len>0:
-                        ##    col+=self.cols[self.lvl][col_len-1]
                         self.cols[self.lvl].append(col)
                 if a[0]=='class':
                     self.row_type = a[1]
+        elif tag=='u':
+            self.underline = True
 
     def handle_endtag(self, tag):
         if tag == 'table':
@@ -101,6 +101,10 @@ class MyHTMLParser(HTMLParser):
             self.row_type_post_adjust(data_size,i)
         if len(self.col_data)>0:
             self.output+='\n'
+            if self.underline:
+                for i in range(0,self.line_pos):
+                    self.output +="-"
+                self.output += '\n'
         self.col_data=[]
 
     def correct_columns(self):
