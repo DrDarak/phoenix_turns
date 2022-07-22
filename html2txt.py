@@ -23,6 +23,8 @@ class MyHTMLParser(HTMLParser):
         self.line_pos = 0
         self.col_pos = -1
         self.row_type=''
+        self.col_data=[]
+        self.row_cols = [] # current columns in row
 
     def handle_starttag(self, tag, attrs):
         if tag == 'body':
@@ -36,6 +38,7 @@ class MyHTMLParser(HTMLParser):
             self.in_line = True
             self.col_pos=-1
             self.row_type = ''
+            self.col_data=[]
         elif tag == 'td':
             self.col_pos+=1
             self.in_data = True
@@ -46,16 +49,14 @@ class MyHTMLParser(HTMLParser):
                         col = int(int(res.groups(0)[0]) / 1.25 + 0.95) # reverses 100%=>80 lines correctly
                         ## make col pos cumulative
                         col_len=len(self.cols[self.lvl])
-                        if col_len>0:
-                            col+=self.cols[self.lvl][col_len-1]
+                        ##if col_len>0:
+                        ##    col+=self.cols[self.lvl][col_len-1]
                         self.cols[self.lvl].append(col)
                 if a[0]=='class':
                     self.row_type = a[1]
 
     def handle_endtag(self, tag):
         if tag == 'table':
-            if self.lvl==2:
-                self.output=self.output[:-1] ## Remove trailing \n
             self.lvl -= 1
             if self.lvl>=0:
                 print()
@@ -64,8 +65,7 @@ class MyHTMLParser(HTMLParser):
             self.first_row=False
             self.in_line = False
             self.first_row =False
-            self.line_pos=0
-            self.output += '\n'
+            self.render_row()
         elif tag == 'td':
             self.in_data = False
 
@@ -73,14 +73,20 @@ class MyHTMLParser(HTMLParser):
         if self.in_data:
             # don't allow any data from html formating to slip in
             data=data.replace("\n", "")
+            if data!='':
+                self.col_data.append(data)
 
-            ## only apply to second columns
-            last_col=self.col_pos-1
+    def render_row(self):
+        self.correct_columns()
+
+        self.line_pos = 0
+        for i in range(0, len(self.col_data)):
+            data=self.col_data[i]
             add_data=''
-            if last_col>=0 and len(self.cols[self.lvl])>last_col:
-                last_col_pos=self.cols[self.lvl][last_col]
+            if i>0 and len(self.row_cols)>i-1:
+                last_col_pos=self.row_cols[i-1]
                 if self.line_pos<last_col_pos:
-                    for i in range(self.line_pos,last_col_pos):
+                    for j in range(self.line_pos,last_col_pos):
                         add_data+=' '
             self.output +=add_data
             self.line_pos += len(add_data)
@@ -92,7 +98,36 @@ class MyHTMLParser(HTMLParser):
             self.output+=data
             self.line_pos+=data_size
 
-            self.row_type_post_adjust(data_size)
+            self.row_type_post_adjust(data_size,i)
+        if len(self.col_data)>0:
+            self.output+='\n'
+        self.col_data=[]
+
+    def correct_columns(self):
+        if  len(self.cols[self.lvl])<=0:
+            self.row_cols=[]
+            return
+
+        ## correct lines that can be
+        self.row_cols= self.cols[self.lvl].copy()
+        if self.row_type=='txt_r':
+            size=len(self.col_data)
+            widths=[]
+            for i in range(0, size):
+                widths.append(len(self.col_data[i]) + 1 + (i == 0) * 3 + (i == (size - 1)))
+                if i>0 and widths[i]>self.row_cols[i]:
+                    c=self.col_data[i-1].find(':')
+                    if widths[i-1]<self.row_cols[i-1] and c>0:
+                        diff=widths[i]-self.row_cols[i]
+                        if diff>(self.row_cols[i-1]-widths[i-1]):
+                            diff=self.row_cols[i-1]-widths[i-1] ## failed
+                        ## modify columns
+                        self.row_cols[i - 1]-=diff
+                        self.row_cols[i] += diff
+
+        # convert to cumlative
+        for i in range(1,len(self.row_cols)):
+            self.row_cols[i]+=self.row_cols[i-1]
 
     def row_type_pre_adjust(self,data_size):
         add_data=''
@@ -113,15 +148,14 @@ class MyHTMLParser(HTMLParser):
                     ins='-'
                 for i in range(0,fsize):
                     add_data+=ins
-
         self.output += add_data
         self.line_pos+=len(add_data)
 
-    def row_type_post_adjust(self,data_size):
+    def row_type_post_adjust(self,data_size,col):
         add_data = ''
         ## if current column is the end column
-        if self.col_pos>=0 and len(self.cols[self.lvl])>self.col_pos and \
-           self.cols[self.lvl][self.col_pos]>=max_line_length:
+        if col>=0 and len(self.row_cols)>col and \
+           self.row_cols[col]>=max_line_length:
             if self.row_type=='txt_r':
                 add_data=self.complete_report()
         if self.lvl==1:
@@ -153,14 +187,11 @@ class MyHTMLParser(HTMLParser):
 
     def process(self,data):
         self.feed(data)
-        lines = re.split(r"\r\n|\r|\n",self.output);
+        lines = re.split(r"\r\n|\r|\n",self.output)
         self.output=''
         for line in lines:
             if len(line)>max_line_length:
-                if line[0]=='|':
-                    line=reduce_line(line)
-                else:
-                    line=break_line(line)
+                line=break_line(line)
             self.output+=line+'\n'
 
 def break_line(line):
@@ -176,34 +207,6 @@ def break_line(line):
     output += line
     return output
 
-def reduce_line(line):
-    ll=len(line)
-    extra=ll-max_line_length
-    ret=re.split('(\w+:\s*)', line)
-    output = ''
-    if ret!=None:
-        # make sure all columns with : are seperated
-        for i in range(0, len(ret)):
-            s = ret[i]
-            if ':' in s and i-1>=0:
-                if ret[i-1][-1]!=' ':
-                    ret[i-1]+=' '
-                    extra+=1
-        ## remove while space from back to front
-        for i in range(len(ret)-1,0,-1):
-            s=ret[i]
-            if ':' in s and extra>0:
-                j=s.find(':')
-                spare=len(s)-(j+2)
-                if spare>extra:
-                    spare=extra
-                extra-=spare
-                ret[i]=s[:-spare]
-        for s in ret:
-            output+=s
-    else:
-        output=line
-    return output
 #<b>
 #<u>
 
