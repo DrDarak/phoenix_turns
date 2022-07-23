@@ -1,0 +1,99 @@
+.tree_control
+{
+	margin: 1em;
+	font-family: Verdana, Arial, Helvetica, sans-serifl;
+	font-size:10pt;
+	overflow: hidden;
+	white-space:nowrap;
+}
+.tree_control input[type='checkbox']
+{
+	position: absolute;
+	clip: rect(0, 0, 0, 0);
+}
+.tree_control input ~ ul { display: none; }
+.tree_control input:checked ~ ul { display: block; }
+.tree_control li
+{
+	line-height: 1.2;
+	position: relative;
+	padding: 0 0 1em 1em;
+	list-style: none;
+}
+.tree_control ul li { padding: 1em 0 0 1em; }
+.tree_control > li:last-child { padding-bottom: 0; }
+.tree_control label
+{
+	position: relative;
+	display: inline-block;
+	background: #fff;
+}
+.tree_control label { cursor: pointer; }
+.tree_control label:hover { color: #666; }
+.tree_control label:before
+{
+	background: #fff;
+	position: relative;
+	z-index: 1;
+	float: left;
+	margin: 0.2em 1em 0 -1.9em;
+	width: .8em;
+	height: .8em;
+	content: '+';
+	text-align: center;
+	line-height: 0.8em;
+	//padding-right:0.05em;
+	border:1px solid #000;
+}
+.tree_control :checked ~ label:before { content: '–';  line-height: 0.8em;}
+.tree_control li:before
+{
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -.5em;
+	display: block;
+	width: 0;
+	border-left: 1px solid #777;
+	content: "";
+ }
+.tree_control li span:before
+{
+	position: absolute;
+	top: 0;
+	left: -1em;
+	display: block;
+	height: 0.5em;
+	width: 1em;
+	border-bottom: 1px solid #777;
+	top: 0.1em;
+	content: '';
+ }
+.tree_control label:after { border-bottom: 0; }
+.tree_control :checked ~ label:after
+{
+	border-top: 1px solid #777;
+	border-bottom: 0;
+	border-left: 0;
+	bottom: 0;
+	top: 0.5em;
+	height: auto;
+	width:1.3em
+}
+.tree_control li:last-child:before
+{
+	height: 1.6em;
+	bottom: auto;
+}
+.tree_control > li:last-child:before { display: none; }
+.tree_control li span
+{
+	height:1em;
+	position:relative;
+	display:inline-block;
+	padding: 0 0.2em 0.2em 0.1em;
+	left:-0.5em;
+	top:-0.1em;
+	width:auto;
+	border:1px solid #777;
+}
