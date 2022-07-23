@@ -26,6 +26,7 @@ class MyHTMLParser(HTMLParser):
         self.col_data=[]
         self.row_cols = [] # current columns in row
         self.underline=False
+        self.add_col_data=None
 
     def handle_starttag(self, tag, attrs):
         if tag == 'body':
@@ -76,10 +77,19 @@ class MyHTMLParser(HTMLParser):
             if data!='':
                 self.col_data.append(data)
 
+    ## render until every row has been done
     def render_row(self):
-        self.correct_columns()
+        first_pass=True
+        while len(self.col_data)>0:
+            self.render_single_row(first_pass)
+            first_pass = False
+
+    def render_single_row(self,first_pass):
+        ## cuts columns that are too long
+        self.correct_columns(first_pass)
 
         self.line_pos = 0
+        self.line_output = ''
         for i in range(0, len(self.col_data)):
             data=self.col_data[i]
             add_data=''
@@ -106,28 +116,61 @@ class MyHTMLParser(HTMLParser):
                     self.output +="-"
                 self.output += '\n'
         self.col_data=[]
+        # add data that was cut from previous row
+        if self.add_col_data:
+            self.col_data=self.add_col_data
 
-    def correct_columns(self):
+    def correct_columns(self,first_pass):
         if  len(self.cols[self.lvl])<=0:
             self.row_cols=[]
             return
-
+        self.add_col_data=None
         ## correct lines that can be
         self.row_cols= self.cols[self.lvl].copy()
-        if self.row_type=='txt_r':
+        if self.row_type=='txt_r' or self.row_type=='txt':
             size=len(self.col_data)
+            r=(self.row_type=='txt_r')
             widths=[]
+            add_widths=[]
+            failed = False
             for i in range(0, size):
-                widths.append(len(self.col_data[i]) + 1 + (i == 0) * 3 + (i == (size - 1)))
-                if i>0 and widths[i]>self.row_cols[i]:
-                    c=self.col_data[i-1].find(':')
-                    if widths[i-1]<self.row_cols[i-1] and c>0:
-                        diff=widths[i]-self.row_cols[i]
-                        if diff>(self.row_cols[i-1]-widths[i-1]):
-                            diff=self.row_cols[i-1]-widths[i-1] ## failed
-                        ## modify columns
-                        self.row_cols[i - 1]-=diff
-                        self.row_cols[i] += diff
+                add_widths.append(1 + r*(i == 0) * 3 + r*(i == (size - 1)))
+                widths.append(len(self.col_data[i])+add_widths[i])
+            for i in range(0, size):
+                too_big=(widths[i] > self.row_cols[i])
+                # only fails (so that line is cut) if too big and after first pass for reports
+                failed = (not r or not first_pass) and too_big
+                # reduce size of : comment only in reports - only do on first pass
+                if too_big and r and first_pass:
+                    c = self.col_data[i].find(':')
+                    if c>0 and i<size-1:
+                        if widths[i+1]<self.row_cols[i+1]:
+                            diff = widths[i]+1-self.row_cols[i]
+                            if diff > (self.row_cols[i+1]-widths[i+1]):
+                                diff=self.row_cols[i + 1] - widths[i + 1]
+                                failed = True
+                            ## modify columns
+                            self.row_cols[i] += diff
+                            self.row_cols[i+1] -= diff
+                        else:
+                            failed = True
+                    elif (i>0):
+                        c=self.col_data[i-1].find(':')
+                        if widths[i-1]<self.row_cols[i-1] and c>0:
+                            diff=widths[i]-self.row_cols[i]
+                            if diff>(self.row_cols[i-1]-widths[i-1]):
+                                diff=self.row_cols[i-1]-widths[i-1]
+                                failed=True
+                            ## modify columns
+                            self.row_cols[i - 1]-=diff
+                            self.row_cols[i] += diff
+                        else:
+                            failed = True
+                # if line is still too long then chop end off and leave for next pass
+                if failed and len(self.col_data[i])>0:
+                    if self.add_col_data==None:
+                        self.add_col_data=['']*len(self.col_data)
+                    (self.col_data[i],self.add_col_data[i])=cut_column(self.col_data[i],self.row_cols[i]-add_widths[i])
 
         # convert to cumlative
         for i in range(1,len(self.row_cols)):
@@ -189,14 +232,13 @@ class MyHTMLParser(HTMLParser):
         add_data += "|"
         return add_data
 
-    def process(self,data):
-        self.feed(data)
-        lines = re.split(r"\r\n|\r|\n",self.output)
-        self.output=''
-        for line in lines:
-            if len(line)>max_line_length:
-                line=break_line(line)
-            self.output+=line+'\n'
+def cut_column(col,max_length):
+    while len(col)>max_length:
+        for i in range(max_length,0,-1):
+            if col[i] == ':' or col[i] == ';' or col[i] == '.' or col[i] == ',' or col[i] == ' ':
+                i+=1
+                return (col[:i],col[i:])
+    return (col,'')
 
 def break_line(line):
     output=''
@@ -215,6 +257,6 @@ def break_line(line):
 #<u>
 
 parser = MyHTMLParser()
-parser.process(read_data)
+parser.feed(read_data)
 print(parser.output)
 

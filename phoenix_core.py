@@ -3,55 +3,98 @@ import json
 import urllib.request
 import urllib.parse
 import xml.etree.ElementTree as et
+import sqlite3 as sql
 
-## global data that just need to be stored in module for later use
+version=0.0
 last_error=''
 data=None
-current_path = os.path.dirname(os.path.realpath(__file__))
-target_path=current_path+'/data/'
-if not os.path.exists(target_path):
-    os.makedirs(target_path)
-position_path=target_path+'positions/'
-if not os.path.exists(position_path):
-    os.makedirs(position_path)
-config_name=target_path+'config.json'
+class phoenix_core_wrapper:
+    def __init__(self):
+        self.current_path = os.path.dirname(os.path.realpath(__file__))
+        self.target_path = self.current_path + '/data/'
+        if not os.path.exists(self.target_path):
+            os.makedirs(self.target_path)
+        self.position_path = self.target_path + 'positions/'
+        if not os.path.exists(self.position_path):
+            os.makedirs(self.position_path)
+        self.config_name = self.target_path + 'config.json'
+        self.db_name = self.target_path + 'phoenix.db'
+        self.db_con=sql.connect(self.db_name)
 
-## load data from config
-def load():
-    global data
-    if data==None:
-        data={}
-        read_data=''
-        if os.path.exists(config_name):
-            with open(config_name) as f:
-                read_data = f.read()
-                data=json.loads(read_data)
-                f.close()
-        if 'positions' not in data:
-            data['positions']={}
-        if 'last_download' not in data:
-            data['last_download'] = -1
-        if 'year_start' not in data:
-            data['year_start'] = [0, 265, 525, 785, 1045, 1305, 1565, 1830, 2090, 2350, 2615, 2875, 3135, 3395, 3655, 3920, 4180, 4440, 4700, 4965, 5225]
-        if 'users' not in data:
-            data['users']={}
-        if 'current_user' not in data:
-            data['current_user'] = 'None'
+        # setup data held by core
+        self.load()
+        self.create_db() # after load()
+        self.update()
 
-## Automatically run load as first action so config is present
-load()
+    def create_db(self):
+        global data
+        cur = self.db_con.cursor()
+        cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name text)')
+        cur.execute('CREATE TABLE IF NOT EXISTS positions (id INTEGER, user_id INTEGER, last_turn INTEGER)')
+        cur.execute('CREATE TABLE IF NOT EXISTS pos_list (pos_id INTEGER, day INTEGER)')
 
-## saving state to file
+        for user in data['users']:
+            cur.execute("SELECT * FROM users WHERE  name= '%s'" % user)
+            db_user=cur.fetchall()
+            if len(db_user)==0:
+                cur.execute("INSERT INTO users (name) VALUES ('%s')" % user)
+            self.db_con.commit()
+
+    def update(self):
+        global version
+        if float(data['version'])>=version:
+            return
+        # do version changes
+
+
+        # save
+        data['version']=version
+        self.save()
+
+    def load(self):
+        global data,version
+        if data == None:
+            data = {}
+            read_data = ''
+            if os.path.exists(self.config_name):
+                with open(self.config_name) as f:
+                    read_data = f.read()
+                    data = json.loads(read_data)
+                    f.close()
+            if 'positions' not in data:
+                data['positions'] = {}
+            if 'last_download' not in data:
+                data['last_download'] = -1
+            if 'year_start' not in data:
+                data['year_start'] = [0, 265, 525, 785, 1045, 1305, 1565, 1830, 2090, 2350, 2615, 2875, 3135, 3395,
+                                      3655, 3920, 4180, 4440, 4700, 4965, 5225]
+            if 'users' not in data:
+                data['users'] = {}
+            if 'current_user' not in data:
+                data['current_user'] = 'None'
+            if 'version' not in data:
+                data['version'] = version
+
+    def save(self):
+        global data
+        ##backup file when it changes and only allow none zero configs
+        if len(data) > 0:
+            if os.path.exists(self.config_name):
+                os.replace(self.config_name, self.target_path + 'config.bak')
+            f = open(self.config_name, 'w')
+            f.write(json.dumps(data))
+            f.close()
+
+    def __del__(self):
+        self.db_con.close()
+
+pcw=phoenix_core_wrapper()
+
+## functions that use wrapper class
 def save():
-    global data
-    ##backup file when it changes and only allow none zero configs
-    if len(data)>0:
-        if os.path.exists(config_name):
-            os.replace(config_name,target_path+'config.bak')
-        f = open(config_name, 'w')
-        f.write(json.dumps(data))
-        f.close()
+    pcw.save()
 
+## funtion that work on data only
 def login(user,password):
     global data,last_error
     payload = {
@@ -94,8 +137,8 @@ def has_user():
     return False
 
 def user_position_path():
-    global position_path,data
-    return position_path + data['current_user']+'/'
+    global data
+    return pcw.position_path + data['current_user']+'/'
 
 def set_current_user(user):
     global data
@@ -110,12 +153,14 @@ def set_current_user(user):
     return False
 
 def user_id():
+    global data
     if 'current_user' in data:
         if data['current_user'] in data['users']:
             user=data['users'][data['current_user']]
             if 'user_id' in user:
                 return user['user_id']
 def user_code():
+    global data
     if 'current_user' in data:
         if data['current_user'] in data['users']:
             user=data['users'][data['current_user']]
