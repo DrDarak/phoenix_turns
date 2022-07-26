@@ -2,10 +2,12 @@ import phoenix_core as core
 import xml.etree.ElementTree as et
 import urllib.request
 import urllib.error
+import json
+import sqlite3 as sql
 
 class position:
     def __init__(self,data):
-        self.data={}
+        self.data={'type':'none','system':'none'}
         if data.tag=='position':
             if len(data.items())>0:
                 for attrib,val in data.items():
@@ -35,9 +37,31 @@ class position:
                         for attrib,val in turn.items():
                             if attrib=='day':
                                 self.data['turns'].append(int(val))
+            elif pos_data.tag == 'system_text':
+                self.data['system'] = pos_data.text
             else:
                 self.data[pos_data.tag]=pos_data.text
+        self.update()
 
+    def last_turn(self):
+        if 'turns' in self.data and 0 in self.data['turns']:
+            return self.data['turns'][0]
+        return 0
+
+    def find(self):
+        cur = core.db().cursor()
+        cur.execute("select * from positions where id=? and user_id=?",(self.data['num'], core.user_id()))
+        return cur.fetchone()
+
+    def update(self):
+        cur = core.db().cursor()
+        if self.find() == None:
+            query = (self.data['num'], core.user_id(), self.data['name'],self.last_turn(), self.data['type'], self.data['system'],json.dumps(self.data))
+            cur.execute("insert into positions values (?,?,?,?,?,?,?)", query)
+        else:
+            query = (self.last_turn(), self.data['type'], self.data['name'], self.data['system'], json.dumps(self.data),self.data['num'], core.user_id())
+            cur.execute("update positions SET name=?,last_turn=?,type=?,system=?,data=? where id=? and user_id=?",query)
+        core.db().commit()
 pos_list=[]
 last_error=''
 
@@ -61,6 +85,13 @@ def process_data(xml_data):
         for data in child:
             pos=position(data)
             pos_list.append(pos)
+
+def create_index_page():
+    body=''
+    output='<html><header><title>Phoenix Turns</title></header><body>'+body+'</body></html>'
+    f = open(core.data_path() + 'index.html', 'w')
+    f.write(output)
+    f.close()
 
 if __name__ == '__main__':
     load()
