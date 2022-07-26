@@ -30,15 +30,28 @@ class phoenix_core_wrapper:
         global data
         cur = self.db_con.cursor()
         cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name text)')
-        cur.execute('CREATE TABLE IF NOT EXISTS positions (id INTEGER, user_id INTEGER, last_turn INTEGER)')
+        cur.execute('CREATE TABLE IF NOT EXISTS positions (id INTEGER, user_id INTEGER,name Text, last_turn INTEGER,type Text,system Text,data TEXT)')
         cur.execute('CREATE TABLE IF NOT EXISTS pos_list (pos_id INTEGER, day INTEGER)')
+        self.update_users()
 
+    def update_users(self):
+        cur = self.db_con.cursor()
         for user in data['users']:
             cur.execute("SELECT * FROM users WHERE  name= '%s'" % user)
             db_user=cur.fetchall()
             if len(db_user)==0:
                 cur.execute("INSERT INTO users (name) VALUES ('%s')" % user)
             self.db_con.commit()
+
+    def find_user_id(self,user):
+        cur = self.db_con.cursor()
+        cur.execute("SELECT * FROM users WHERE  name= '%s'" % user)
+        db_user = cur.fetchone()
+        if db_user!=None:
+            return db_user[0]
+        cur.execute("INSERT INTO users (name) VALUES ('%s')" % user)
+        self.db_con.commit()
+        return self.find_user_id(user)
 
     def update(self):
         global version
@@ -93,6 +106,8 @@ pcw=phoenix_core_wrapper()
 ## functions that use wrapper class
 def save():
     pcw.save()
+def db():
+    return pcw.db_con
 
 ## funtion that work on data only
 def login(user,password):
@@ -124,7 +139,8 @@ def login(user,password):
             if child.tag == 'code':
                 code = child.text
         if uid>0 and code!='':
-            data['users'][user]={'user_id':uid,'code':code}
+            id=pcw.find_user_id(user)
+            data['users'][user]={'user_id':id,'site_id':uid,'code':code}
             data['current_user']=user
             save()
             return True
@@ -132,13 +148,15 @@ def login(user,password):
 def has_user():
     global data
     if 'current_user' in data:
-        if user_id()>0 and user_code()!='':
+        if site_id()>0 and user_code()!='':
             return True
     return False
 
 def user_position_path():
     global data
     return pcw.position_path + data['current_user']+'/'
+def data_path():
+    return pcw.target_path
 
 def set_current_user(user):
     global data
@@ -159,6 +177,15 @@ def user_id():
             user=data['users'][data['current_user']]
             if 'user_id' in user:
                 return user['user_id']
+    return 0
+def site_id():
+    global data
+    if 'current_user' in data:
+        if data['current_user'] in data['users']:
+            user=data['users'][data['current_user']]
+            if 'site_id' in user:
+                return user['site_id']
+    return 0
 def user_code():
     global data
     if 'current_user' in data:
@@ -166,8 +193,8 @@ def user_code():
             user=data['users'][data['current_user']]
             if 'code' in user:
                 return user['code']
-
+    return ''
 def phoenix_request(request_type):
     if has_user():
-        return urllib.request.Request('https://www.phoenixbse.com/index.php?a=xml&sa=' +request_type+'&uid=' + str(user_id()) + '&code=' + user_code())
+        return urllib.request.Request('https://www.phoenixbse.com/index.php?a=xml&sa=' +request_type+'&uid=' + str(site_id()) + '&code=' + user_code())
     return None
