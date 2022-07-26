@@ -3,6 +3,7 @@ from PyQt5 import QtWidgets, QtGui
 from dialogs import *
 import phoenix_core as core
 from functools import partial
+import webbrowser
 
 
 
@@ -10,11 +11,16 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     """
     CREATE A SYSTEM TRAY ICON CLASS AND ADD MENU
     """
-
     def __init__(self, icon, parent=None):
         QtWidgets.QSystemTrayIcon.__init__(self, icon, parent)
         self.setToolTip(f'Phoenix Turn Downloader')
         self.menu = QtWidgets.QMenu(parent)
+
+        self.show_turns = self.menu.addAction("Show Turns")
+        self.show_turns.triggered.connect(self.show_turns_window)
+        self.show_turns.setIcon(QtGui.QIcon("phoenix_32x32.png"))
+
+        self.separator_1 = self.menu.addSeparator()
 
         ## add user list
         self.users=[]
@@ -24,19 +30,19 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             action.triggered.connect(partial(self.change_user,login))
         self.update_current_user()
 
-        self.separator=self.menu.addSeparator()
+        self.separator_2=self.menu.addSeparator()
 
-        open_app = self.menu.addAction("Update Turns")
-        open_app.triggered.connect(self.update_turns_window)
-        open_app.setIcon(QtGui.QIcon("phoenix_32x32.png"))
+        self.update_turns = self.menu.addAction("Update Turns")
+        self.update_turns.triggered.connect(self.update_turns_window)
+        self.update_turns.setIcon(QtGui.QIcon("phoenix_32x32.png"))
 
         self.login_action = self.menu.addAction("Login")
-        self.login_action.setIcon(QtGui.QIcon("phoenix_32x32.png"))
+        self.login_action.setIcon(QtWidgets.QApplication.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
         self.login_action.triggered.connect(self.login_window)
 
         exit_ = self.menu.addAction("Exit")
         exit_.triggered.connect(lambda: sys.exit())
-        exit_.setIcon(QtGui.QIcon("phoenix_32x32.png"))
+        exit_.setIcon(QtWidgets.QApplication.style().standardIcon(QtWidgets.QStyle.SP_BrowserStop))
 
 
         self.setContextMenu(self.menu)
@@ -77,7 +83,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         if old_user!=core.data['current_user']:
             ## add new action to menu
             action = QtWidgets.QAction(core.data['current_user'], self)
-            self.menu.insertAction(self.separator, action)
+            self.menu.insertAction(self.separator_2, action)
             action.triggered.connect(lambda: self.change_user(core.data['current_user']))
             self.users.append(action)
             self.update_current_user()
@@ -93,6 +99,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         dlg=TurnUpdate_Dialog()
         dlg.show()
 
+    def show_turns_window(self):
+        webbrowser.open(core.data_path()+'index.html')
 def main():
     app = QtWidgets.QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
