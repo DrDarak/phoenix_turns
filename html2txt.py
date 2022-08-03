@@ -255,8 +255,8 @@ def break_line(line):
 
 #<b>
 #<u>
-
-parser = MyHTMLParser()
-parser.feed(read_data)
-print(parser.output)
+if __name__ == '__main__':
+    parser = MyHTMLParser()
+    parser.feed(read_data)
+    print(parser.output)
 

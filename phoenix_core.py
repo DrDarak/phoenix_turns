@@ -23,7 +23,7 @@ class phoenix_core_wrapper:
 
         # setup data held by core
         self.load()
-        self.create_db() # after load()
+        self.create_db()  # after load()
         self.update()
 
     def create_db(self):
@@ -88,9 +88,16 @@ class phoenix_core_wrapper:
             if 'version' not in data:
                 data['version'] = version
 
+    def year(self,day):
+        for i,year_start in enumerate(reversed(data['year_start'])):
+            if day>=year_start:
+                y=len(data['year_start'])-i+201
+                return y
+
+
     def save(self):
         global data
-        ##backup file when it changes and only allow none zero configs
+        # backup file when it changes and only allow none zero configs
         if len(data) > 0:
             if os.path.exists(self.config_name):
                 os.replace(self.config_name, self.target_path + 'config.bak')
@@ -104,6 +111,8 @@ class phoenix_core_wrapper:
 pcw=phoenix_core_wrapper()
 
 ## functions that use wrapper class
+def year(day):
+    pcw.year(day)
 def save():
     pcw.save()
 def db():

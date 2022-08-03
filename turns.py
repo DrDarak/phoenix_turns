@@ -14,7 +14,7 @@ def load(progress=None,finished=None):
     if status.data['last_upload']>core.data['last_download']:
         core.data['last_download']=status.data['current_day']
         ## do download
-        pos.load()
+        pos.load_from_site()
         if progress:
             progress.setRange(0,len(pos.pos_list))
             progress.setProperty("value", 0)

@@ -17,4 +17,4 @@ div.t_d_vlt		{top:18px;}
 div.t_d_vlb		{top:-10px;height:18px;}
 div.t_xd_s		{position:relative;width:100%;height:100%;overflow:hidden}
 div.t_xd_n		{display:inline-block;height:100%;width:97%;margin-left:3%;}
-div,td { font-family: Verdana, Arial, Helvetica, sans-serifl; font-size:8pt;}
+div,td { font-family: Verdana, Arial, Helvetica, sans-serifl; font-size:8pt;caret-color: transparent;}

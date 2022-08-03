@@ -43,5 +43,33 @@ def process_data(xml_data):
                 core.data['year_start'].append(year_start)
                 core.save()
 
+def Date(day,add_year=False):
+    global data
+    if 'year_start' not in data:
+        load()
+    if 'year_start' not in data:
+        return ''
+
+    d=day-int(data['year_start'])
+    week=d
+    week=int(week/5)
+    d-=week*5
+    week+=1
+    d+=1
+    s=str(week) +"."+str(d)
+    if add_year:
+        return str(core.year(day)) + '.'
+    return
+def current_day():
+    if check_loaded():
+        return data['current_day']
+    return 0
+def check_loaded():
+    global data
+    if 'year_start' not in data:
+        load()
+    if 'year_start' not in data:
+        return False
+    return True
 if __name__ == '__main__':
     load()

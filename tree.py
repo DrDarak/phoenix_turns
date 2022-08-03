@@ -59,7 +59,7 @@ class TreeControl:
 		last_cat=-1
 		s=''
 		size=len(data_list)
-		for i,(k, data) in enumerate(data_list.items()):
+		for k, data in enumerate(data_list):
 			## determin next catagory
 			next_cat=-2
 			if k+1<size:
@@ -108,7 +108,7 @@ class TreeControl:
 				s+="			<div class='t_d_n2'>"+data['name']+"</div>\n"
 			s+="		</div>\n"
 			## insert description if used
-			if self.use_desc:
+			if self.use_desc and 'html' in data:
 				s+="		<div class='t_xd_s' style='"+open+"' id='t_"+str(self.id)+"_d_"+data['id']+"'>\n";
 				## write a vertical line if ther eis another elemnt in catagory
 				if next_cat==cat_id:
@@ -220,7 +220,7 @@ class Output():
 	def update_colours(self,colour):
 		## update colour scheme
 		cs=self.colour_scheme[colour]
-		for i,(k,v) in enumerate(cs.items()):
+		for i,(k,v) in enumerate(reversed(cs).items()):
 			self.style = self.style.replace(k, v)
 
 	def add_css_file(self,file):
@@ -234,13 +234,16 @@ class Output():
 			self.script_file+="<script type='text/javascript' src='"+file+"?v="+Output.VERSION+"'></script>\n";
 			self.script_file_list.append(file)
 
-	def add_style(self,style):
+	def colour_replace(self,text):
 		cs=self.colour_scheme[self.colour]
 		for i,(k,v) in enumerate(cs.items()):
-			style = style.replace(k, v)
-		style = style.replace("images/", self.image_path)
-		self.style+=style
+			text = text.replace(k, v)
+		return text.replace("images/", self.image_path)
 
+	def add_style(self,style):
+		self.style+=self.colour_replace(style)
+	def add_script(self,script):
+		self.script+=self.colour_replace(script)
 	def add(self,body):
 		cs=self.colour_scheme[self.colour]
 		for i,(k,v) in enumerate(cs.items()):
@@ -254,6 +257,7 @@ class Output():
 		s +=self.css_file
 		s += self.script_file
 		s += "<style type='text/css'>\n"+self.style+"</style>\n"
+		s += "<script type='text/javascript'>\n" + self.script + "</script>\n"
 		s += "</header>\n<body>\n"
 		s +=self.body
 		s +="</body></html>"
@@ -273,11 +277,11 @@ if __name__ == '__main__':
 	##       }
 	tmp =[]
 	cat_types = {0:'One',1:'Two',2:'Three'}
-	data_list={0:{'id':'1','cat_id':0,'name':'first','html':'o'},
-			  1:{'id': '2', 'cat_id': 0, 'name': 'second', 'html': 'o'},
-				2: {'id': '3', 'cat_id': 1, 'name': 'third', 'html': 'o'},
-				3: {'id': '4', 'cat_id': 1, 'name': 'fourth', 'html': 'o'},
-			   4:{'id':'5','cat_id':2,'name':'fifth','html':'o'}}
+	data_list=[{'id':'1','cat_id':0,'name':'first','html':'o'},
+			  {'id': '2', 'cat_id': 0, 'name': 'second', 'html': 'o'},
+			 {'id': '3', 'cat_id': 1, 'name': 'third', 'html': 'o'},
+			 {'id': '4', 'cat_id': 1, 'name': 'fourth', 'html': 'o'},
+			{'id':'5','cat_id':2,'name':'fifth','html':'o'}]
 	last_type = -1
 	cnt = 0;
 	collasped_cats = {0:'a',1:'b',2:'c'}
