@@ -151,6 +151,7 @@ class Position:
 			self.data['type']=Position.reverse_pos_types[self.data['type']]
 		else:
 			self.data['type']=0
+
 	def last_turn(self):
 		if 'turns' in self.data and 0 in self.data['turns']:
 			return self.data['turns'][0]
@@ -162,6 +163,8 @@ class Position:
 		return cur.fetchone()
 
 	def update(self):
+		if 'ext_name' in self.data:
+			del self.data['ext_name']
 		cur = core.db().cursor()
 		if self.find() == None:
 			query = (self.data['num'], core.user_id(), self.data['name'],self.last_turn(), self.data['type_name'], self.data['system'],json.dumps(self.data))
@@ -302,6 +305,7 @@ class Position:
 				cat_name =str(rec)+" <img src='colour/r_arr.gif'/> "+str(rec+10)+' Weeks'
 			self.sort=int(rec)
 			self['cat_id'] = int(rec)
+		self['ext_name']=self['name']+" ("+str(self['id'])+")"
 		return cat_name
 
 
@@ -328,7 +332,6 @@ def sort_list(user_search,pos_flag=-1,filter_op=False):
 
 	if len(cat_list)==0:
 		cat_list={0:"Positions"}
-	print(cat_list)
 	# create collasped list
 	global collasped_cats
 	collasped_cats={}

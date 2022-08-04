@@ -101,11 +101,15 @@ class TreeControl:
 					    "		<img class='t_d_t2' src='images/tree_2.gif'/>\n"
 			## write name of data - can contain extra info
 			(open,closed,expander)=self.open_state(closed_list,False,data['id'])
+			# either use name or ext_name if it exists
+			name=data['name']
+			if 'ext_name' in data:
+				name = data['ext_name']
 			if self.use_desc:
 				s+="			<img class='t_d_xl' onclick='tree_toggle_data(this,"+str(data['id'])+","+str(self.id)+")' src='"+expander+"'/>\n"\
-					"			<div class='t_d_n'>"+data['name']+"</div>\n"
+					"			<div class='t_d_n'>"+name+"</div>\n"
 			else:
-				s+="			<div class='t_d_n2'>"+data['name']+"</div>\n"
+				s+="			<div class='t_d_n2'>"+name+"</div>\n"
 			s+="		</div>\n"
 			## insert description if used
 			if self.use_desc and 'html' in data:
