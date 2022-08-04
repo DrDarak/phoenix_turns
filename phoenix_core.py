@@ -112,7 +112,7 @@ pcw=phoenix_core_wrapper()
 
 ## functions that use wrapper class
 def year(day):
-    pcw.year(day)
+    return pcw.year(day)
 def save():
     pcw.save()
 def db():

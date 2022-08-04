@@ -83,7 +83,7 @@ class TreeControl:
 				s+="<div class='t_element'>\n"\
 					"	<div "+self.t_cat+">\n"\
 					"		<img "+self.t_c_x+" onclick='tree_toggle_cat(this,"+str(cat_id)+","+str(self.id)+")'  src='./"+expander+"'/>\n"\
-					"		<div "+self.t_c_n+">"+cat_type+"</div>\n"\
+					"		<div "+self.t_c_n+">"+str(cat_type)+"</div>\n"\
 					"	</div> \n"\
 					"	<div class='t_data' id='t_"+str(self.id)+"_c_"+str(cat_id)+"' style='"+self.t_data_style+closed+"'>\n"\
 					"		<div "+self.t_d_s+"><img class='t_d_t' src='images/tree_3.gif'/><div "+self.t_d_n_collaspsed+">"+cat_collasped+"</div></div>\n"\
@@ -238,18 +238,15 @@ class Output():
 		cs=self.colour_scheme[self.colour]
 		for i,(k,v) in enumerate(cs.items()):
 			text = text.replace(k, v)
-		return text.replace("images/", self.image_path)
+		text=text.replace("images/", self.image_path)
+		return text.replace("colour/", self.image_path+self.colour+"/")
 
 	def add_style(self,style):
 		self.style+=self.colour_replace(style)
 	def add_script(self,script):
 		self.script+=self.colour_replace(script)
 	def add(self,body):
-		cs=self.colour_scheme[self.colour]
-		for i,(k,v) in enumerate(cs.items()):
-			body = body.replace(k, v)
-		body = body.replace("images/", self.image_path)
-		self.body+=body
+		self.body+=self.colour_replace(body)
 	def html(self):
 		s = "<html>\n<header>\n"
 		if self.title!='':

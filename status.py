@@ -58,7 +58,7 @@ def Date(day,add_year=False):
     d+=1
     s=str(week) +"."+str(d)
     if add_year:
-        return str(core.year(day)) + '.'
+        return str(core.year(day)) + '.' +s
     return
 def current_day():
     if check_loaded():
