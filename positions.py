@@ -187,6 +187,122 @@ class Position:
 		if tus > 300:
 			tus = 300
 		return tus
+	def sort_data(self,user_search):
+		day=status.current_day()
+		tus=self.current_tus()
+		if self['type']!=Position.POSITIONTYPE_GP and self['type']!=Position.POSITIONTYPE_SHIP:
+			tus=-300
+		integrity=200.0
+		if 'int' in self['loc_info']:
+			integrity=float(self['loc_info']['int'])
+		rec =-10
+		if 'rec' in self['loc_info']:
+			rec =(day-int(self['loc_info']['rec']))/5
+		orders=False
+		if 'orders' in self and self['orders']!='false':
+			orders=True
+		# set sort
+		self.sort = ''
+		self['cat_id']=0
+		# simple convertions
+		if user_search==Position.PST_POSITION:
+			self.sort = self['type_name']
+			self['cat_id']=self['type']
+		elif user_search == Position.PST_SYSTEM:
+			self.sort=self['system']
+			res = re.match(".*\\((\\d+)\\)",self['system'])
+			if res != None:
+				self['cat_id'] =int(res.groups(0)[0])
+		elif user_search == Position.PST_NAME:
+			self.sort=self['name']
+		elif user_search == Position.PST_NUMBER:
+			self.sort=self['num']
+		elif user_search == Position.PST_SQUADRON:
+			self.sort = 'No Squadron'
+			if 'squadron' in self:
+				self.sort=self['squadron']
+				res = re.match(".*\\((\\d+)\\)", self['squadron'])
+				if res != None:
+					self['cat_id'] = int(res.groups(0)[0])
+		elif user_search == Position.PST_DEAD_TURNS:
+			self.sort='Not implemented'
+		cat_name=self.sort
+
+		# differnt cat names + quantisation of sort
+		if user_search == Position.PST_LAST:
+			last=0
+			if 'day' in self['loc_info']:
+				last = int(self['loc_info']['day'])
+			self.sort=last
+			self['cat_id'] = last
+			cat_name =status.Date(last,True)
+		if user_search == Position.PST_NAME or user_search == Position.PST_NUMBER:
+			cat_name='Positions'
+		if user_search == Position.PST_TUS or user_search == Position.PST_TUS_ORDERS or user_search == Position.PST_TUS_NO_ORDERS:
+			if (user_search == Position.PST_TUS_ORDERS or user_search == Position.PST_TUS_NO_ORDERS) and orders==(user_search == Position.PST_TUS_NO_ORDERS):
+				tus = -300
+			if tus<=-300:
+				self.sort = -300
+				cat_name='Tus not used'
+				if 	user_search == Position.PST_TUS_NO_ORDERS:
+					cat_name+=' or has orders'
+				if user_search == Position.PST_TUS_ORDERS:
+					cat_name+=' or has no orders'
+			elif tus >= 300:
+				self.sort = 300
+				cat_name = '300 Tus'
+			else:
+				self.sort = 30 * int(tus / 30)
+				cat_name =str(self.sort)+" <img src='colour/r_arr.gif'/> "
+				if (tus+30 > 300):
+					cat_name+='300 Tus'
+				else:
+					cat_name+=str(self.sort+30)+' Tus'
+			self['cat_id'] = self.sort
+		if user_search == Position.PST_DMG:
+			dmg =0.0
+			if 'ship_info' in self and 'dmg' in self['ship_info']:
+				res = re.match("(\\d+\\.?\\d+)%", self['ship_info']['dmg'])
+				if res != None:
+					dmg  = float(res.groups(0)[0])
+			if dmg == 0.0:
+				cat_name = '0%'
+			elif dmg >= 100.0:
+				cat_name = '100%'
+			else:
+				dmg = float(10 * int(dmg / 10))
+				cat_name = str(dmg)+"% <img src='colour/r_arr.gif'/> "
+				if dmg+10 >= 100:
+					cat_name+='100%'
+				else:
+					cat_name+=str(dmg+10)+'%'
+				cat_name+= " Damage"
+			self.sort=dmg
+			self['cat_id'] = int(dmg)
+		if user_search == Position.PST_INTEGRITY:
+			if integrity == 0.0:
+				cat_name = '0%'
+			elif integrity >= 100.0:
+				cat_name = '100%'
+			else:
+				integrity = float(10 * int(integrity / 10))
+				cat_name = str(integrity) + "% <img src='colour/r_arr.gif'/> "
+				if integrity + 10 >= 100:
+					cat_name += '100%'
+				else:
+					cat_name += str(integrity + 10) + '%'
+				cat_name += " Integrity"
+			self.sort=integrity
+			self['cat_id'] = int(integrity)
+		if user_search == Position.PST_RECREATION:
+			if rec == -10:
+				cat_name = 'Recreation not used';
+			else:
+				rec = 10 * (int)(rec / 10)
+				cat_name =str(rec)+" <img src='colour/r_arr.gif'/> "+str(rec+10)+' Weeks'
+			self.sort=int(rec)
+			self['cat_id'] = int(rec)
+		return cat_name
 
 
 collasped_cats={}
@@ -203,70 +319,16 @@ def sort_list(user_search,pos_flag=-1,filter_op=False):
 				continue
 			if filter_op and pos.data['type_name']=='Outpost':
 				continue
-
-		day=status.current_day()
-		tus=pos.current_tus()
-		if pos['type']!=Position.POSITIONTYPE_GP and pos['type']!=Position.POSITIONTYPE_SHIP:
-			tus=-300
-		integrity=200.0
-		if 'int' in pos.data['loc_info']:
-			integrity=float(pos.data['loc_info']['int'])
-		rec =-10
-		if 'rec' in pos.data['loc_info']:
-			rec =(day-int(pos.data['loc_info']['rec']))/5
-		orders=False
-		if 'orders' in pos.data and pos.data['orders']!='false':
-			orders=True
-		# set sort
-		pos.sort = ''
-		pos['cat_id']=0
-		if user_search==Position.PST_POSITION:
-			pos.sort = pos.data['type_name']
-			pos['cat_id']=pos.data['type']
-		elif user_search == Position.PST_SYSTEM:
-			pos.sort=pos.data['system']
-			res = re.match(".*\\((\\d+)\\)",pos.data['system'])
-			if res != None:
-				pos['cat_id'] =int(res.groups(0)[0])
-		elif user_search == Position.PST_NAME:
-			pos.sort=pos.data['name']
-		elif user_search == Position.PST_NUMBER:
-			pos.sort=pos.data['num']
-		elif user_search == Position.PST_LAST:
-			if 'day' in pos.data['loc_info']:
-				pos.sort = pos.data['loc_info']['day']
-		elif user_search == Position.PST_TUS_ORDERS:
-			pos.sort =tus
-			if orders==False:
-				pos.sort=-300
-		elif user_search == Position.PST_TUS_NO_ORDERS:
-			pos.sort = tus
-			if orders==True:
-				pos.sort =-300
-		elif user_search == Position.PST_TUS:
-			pos.sort=tus
-		elif user_search == Position.PST_INTEGRITY:
-			pos.sort=integrity
-		elif user_search == Position.PST_RECREATION:
-			pos.sort=rec
-		elif user_search == Position.PST_SQUADRON:
-			pos.sort='Not implemented'
-		elif user_search == Position.PST_DMG:
-			pos.sort=0.0
-			if 'ship_info' in pos.data and 'dmg' in pos.data['ship_info']:
-				res = re.match("(\\d+\\.?\\d+)%", pos.data['ship_info']['dmg'])
-				if res != None:
-					pos.sort = float(res.groups(0)[0])
-		elif user_search == Position.PST_DEAD_TURNS:
-			pos.sort='Not implemented'
+		cat_name=pos.sort_data(user_search)
 		if pos['cat_id'] not in cat_list:
-			cat_list[pos['cat_id']]=pos.sort
+			cat_list[pos['cat_id']]=cat_name
 		if pos['cat_id'] not in type_cnt:
 			type_cnt[pos['cat_id']]=0
 		type_cnt[pos['cat_id']]+=1
 
-	if user_search != Position.PST_POSITION and user_search != Position.PST_SYSTEM:
+	if len(cat_list)==0:
 		cat_list={0:"Positions"}
+	print(cat_list)
 	# create collasped list
 	global collasped_cats
 	collasped_cats={}
@@ -386,7 +448,7 @@ def create_index_page():
 def construct_tree(out,add_style=True,user_search=Position.PST_POSITION):
 	sort_list(user_search)
 	t = tree.TreeControl(True, False)
-	t.setup('blue', 120, 0, 'std', True)
+	t.setup('blue', 160, 0, 'std', True)
 	body = t.create(pos_list,cat_list, collasped_cats, closed_list=[])
 	if add_style:
 		out.add_style(t.style)
