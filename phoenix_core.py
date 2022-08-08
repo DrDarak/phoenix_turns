@@ -31,7 +31,7 @@ class phoenix_core_wrapper:
         cur = self.db_con.cursor()
         cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name text)')
         cur.execute('CREATE TABLE IF NOT EXISTS positions (id INTEGER, user_id INTEGER,name Text, last_turn INTEGER,type Text,system Text,data TEXT)')
-        cur.execute('CREATE TABLE IF NOT EXISTS pos_list (pos_id INTEGER, day INTEGER)')
+        cur.execute('CREATE TABLE IF NOT EXISTS turns (pos_id INTEGER, user_id INTEGER,day INTEGER,downloaded INTEGER)')
         self.update_users()
 
     def update_users(self):
@@ -87,13 +87,18 @@ class phoenix_core_wrapper:
                 data['current_user'] = 'None'
             if 'version' not in data:
                 data['version'] = version
-
-    def year(self,day):
-        for i,year_start in enumerate(reversed(data['year_start'])):
-            if day>=year_start:
-                y=len(data['year_start'])-i+201
-                return y
-
+            if 'last_actions' not in data:
+                data['last_actions']={'info_data':      0,
+                                        'order_data':   0,
+                                        'pos_list':     0,
+                                        'game_status':  0, #unix time game_status updated
+                                        'notes':        0,
+                                        'items':        0,
+                                        'systems':      0,
+                                        'gen_index':    0,
+                                        'upload_time':0}  #unix time when site updated
+            # reload game sttus on every restart
+            data['last_actions']['game_status'] =0
 
     def save(self):
         global data
@@ -111,8 +116,6 @@ class phoenix_core_wrapper:
 pcw=phoenix_core_wrapper()
 
 ## functions that use wrapper class
-def year(day):
-    return pcw.year(day)
 def save():
     pcw.save()
 def db():
@@ -164,8 +167,15 @@ def has_user():
 def user_position_path():
     global data
     return pcw.position_path + data['current_user']+'/'
+
 def data_path():
     return pcw.target_path
+
+def turn_path(pos_id,turn_day):
+    day_path = user_position_path() + str(turn_day) + '/'
+    if not os.path.exists(day_path):
+        os.makedirs(day_path)
+    return day_path + str(pos_id) + '.html'
 
 def set_current_user(user):
     global data
@@ -207,3 +217,28 @@ def phoenix_request(request_type):
     if has_user():
         return urllib.request.Request('https://www.phoenixbse.com/index.php?a=xml&sa=' +request_type+'&uid=' + str(site_id()) + '&code=' + user_code())
     return None
+
+def year(day):
+    for i,year_start in enumerate(reversed(data['year_start'])):
+        if day>=year_start:
+            y=len(data['year_start'])-i+201
+            return y
+
+def date(day,add_year=False):
+    global data
+    year_start=0
+    for i in reversed(data['year_start']):
+        if day>=i:
+            year_start=i
+            break
+
+    d=day-year_start
+    week=d
+    week=int(week/5)
+    d-=week*5
+    week+=1
+    d+=1
+    s=str(week) +"."+str(d)
+    if add_year:
+        return str(year(day)) + '.' +s
+    return

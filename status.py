@@ -1,21 +1,32 @@
 import phoenix_core as core
+import positions
 import urllib.request
 import urllib.error
 import xml.etree.ElementTree as et
+import time
 
 data = {'last_upload':0}
 last_error=''
-def load():
+# use overide to make download turns work now
+def load(override=False):
     global last_error
-    req= core.phoenix_request('game_status')
-    if req!=None:
-        xml_data=None
-        try:
-            xml_data=urllib.request.urlopen(req)
-        except urllib.error.URLError as e:
-            last_error=e.reason
-        if xml_data!=None:
-            process_data(xml_data)
+    # only refresh every hr until 20 hrs has passed from upload
+    update_time = 3600
+    if core.data['last_actions']['upload_time']+3600*20< time.time():
+        update_time=600
+
+    if core.data['last_actions']['game_status']+update_time < time.time() or override==True:
+        core.data['last_actions']['game_status'] = int(time.time())
+        core.save()
+        req= core.phoenix_request('game_status')
+        if req!=None:
+            xml_data=None
+            try:
+                xml_data=urllib.request.urlopen(req)
+            except urllib.error.URLError as e:
+                last_error=e.reason
+            if xml_data!=None:
+                process_data(xml_data)
 
 def process_data(xml_data):
     global data
@@ -42,24 +53,12 @@ def process_data(xml_data):
             if year_start not in core.data['year_start']:
                 core.data['year_start'].append(year_start)
                 core.save()
+        if data['last_upload'] > core.data['last_actions']['pos_list']:
+            if positions.load_from_site():
+                core.data['last_actions']['pos_list'] = data['current_day']
+                core.data['last_actions']['upload_time']=int(time.time())
+                core.save()
 
-def Date(day,add_year=False):
-    global data
-    if 'year_start' not in data:
-        load()
-    if 'year_start' not in data:
-        return ''
-
-    d=day-int(data['year_start'])
-    week=d
-    week=int(week/5)
-    d-=week*5
-    week+=1
-    d+=1
-    s=str(week) +"."+str(d)
-    if add_year:
-        return str(core.year(day)) + '.' +s
-    return
 def current_day():
     if check_loaded():
         return data['current_day']

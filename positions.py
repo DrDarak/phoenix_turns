@@ -33,7 +33,7 @@ class Position:
 	reverse_pos_types={	'None':		POSITIONTYPE_NONE,
 						'Gp':		POSITIONTYPE_GP,
 						'Ship':		POSITIONTYPE_SHIP,
-						'StarBase':	POSITIONTYPE_STARBASE,
+						'Starbase':	POSITIONTYPE_STARBASE,
 						'Debris':	POSITIONTYPE_DEBRIS,
 						'Political':POSITIONTYPE_POLITICAL,
 						'Platform':	POSITIONTYPE_PLATFORM,
@@ -144,13 +144,15 @@ class Position:
 				self.data['system'] = pos_data.text
 			else:
 				self.data[pos_data.tag] = pos_data.text
-		# swap around
+		# swap around type
 		self.data['type_name']=self.data['type']
-		self.data['id']=self.data['num']
 		if self.data['type'] in Position.reverse_pos_types:
 			self.data['type']=Position.reverse_pos_types[self.data['type']]
 		else:
 			self.data['type']=0
+		# move num to id
+		self.data['id']=self.data['num']
+		del self.data['num']
 
 	def last_turn(self):
 		if 'turns' in self.data and 0 in self.data['turns']:
@@ -159,19 +161,33 @@ class Position:
 
 	def find(self):
 		cur = core.db().cursor()
-		cur.execute("select * from positions where id=? and user_id=?",(self.data['num'], core.user_id()))
+		cur.execute("select * from positions where id=? and user_id=?",(self.data['id'], core.user_id()))
 		return cur.fetchone()
 
 	def update(self):
 		if 'ext_name' in self.data:
 			del self.data['ext_name']
 		cur = core.db().cursor()
+		#write position to db
 		if self.find() == None:
-			query = (self.data['num'], core.user_id(), self.data['name'],self.last_turn(), self.data['type_name'], self.data['system'],json.dumps(self.data))
+			query = (self.data['id'], core.user_id(), self.data['name'],self.last_turn(), self.data['type_name'], self.data['system'],json.dumps(self.data))
 			cur.execute("insert into positions values (?,?,?,?,?,?,?)", query)
 		else:
-			query = (self.last_turn(), self.data['type_name'], self.data['name'], self.data['system'], json.dumps(self.data),self.data['num'], core.user_id())
+			query = (self.last_turn(), self.data['type_name'], self.data['name'], self.data['system'], json.dumps(self.data),self.data['id'], core.user_id())
 			cur.execute("update positions SET name=?,last_turn=?,type_name=?,system=?,data=? where id=? and user_id=?",query)
+
+		#write positons turn to database if they are not already present
+		if 'turns' in self.data:
+			self.data['turns'].sort() # places oldest turn in first array pos
+			# search for turns in turns younger than oldest turn on nexus - should always find duplicates in db
+			cur.execute("select day from  turns where pos_id=? and user_id=? and day>=?", (self.data['id'], core.user_id(),self.data['turns'][0]))
+			turn_list = cur.fetchall()
+			turns={}
+			for turn in turn_list:
+				turns[turn[0]]=1
+			for turn_day in self.data['turns']:
+				if turn_day not in turns:
+					cur.execute("insert into turns values (?,?,?,?)", (self.data['id'],core.user_id(),turn_day,0))
 		core.db().commit()
 
 	def current_tus(self):
@@ -185,11 +201,22 @@ class Position:
 			diff = game_day - last_update_day
 		# we have 60TU extra because it's for tommorrow
 		if diff >= 0:
-			tus = tus + (diff + 1) * 60;
-		# limit to 300;
+			tus = tus + (diff + 1) * 60
+		# limit to 300
 		if tus > 300:
 			tus = 300
 		return tus
+
+	def create_html_data(self):
+		self.data['html']=''
+		cur = core.db().cursor()
+		cur.execute("select day from turns where pos_id=? and user_id=? limit 10",(self.data['id'], core.user_id()))
+		turn_list = cur.fetchall()
+		for turn_day in turn_list:
+			turn_file=core.turn_path(self.data['id'],turn_day[0])
+			date=core.date(turn_day[0],True)
+			self.data['html']+="<a href='"+turn_file+"' target='on'>"+date+"</a>"
+
 	def sort_data(self,user_search):
 		day=status.current_day()
 		tus=self.current_tus()
@@ -219,7 +246,7 @@ class Position:
 		elif user_search == Position.PST_NAME:
 			self.sort=self['name']
 		elif user_search == Position.PST_NUMBER:
-			self.sort=self['num']
+			self.sort=self['id']
 		elif user_search == Position.PST_SQUADRON:
 			self.sort = 'No Squadron'
 			if 'squadron' in self:
@@ -238,7 +265,7 @@ class Position:
 				last = int(self['loc_info']['day'])
 			self.sort=last
 			self['cat_id'] = last
-			cat_name =status.Date(last,True)
+			cat_name =core.date(last,True)
 		if user_search == Position.PST_NAME or user_search == Position.PST_NUMBER:
 			cat_name='Positions'
 		if user_search == Position.PST_TUS or user_search == Position.PST_TUS_ORDERS or user_search == Position.PST_TUS_NO_ORDERS:
@@ -299,7 +326,7 @@ class Position:
 			self['cat_id'] = int(integrity)
 		if user_search == Position.PST_RECREATION:
 			if rec == -10:
-				cat_name = 'Recreation not used';
+				cat_name = 'Recreation not used'
 			else:
 				rec = 10 * (int)(rec / 10)
 				cat_name =str(rec)+" <img src='colour/r_arr.gif'/> "+str(rec+10)+' Weeks'
@@ -358,6 +385,8 @@ def load_from_site():
 			last_error=e.reason
 		if xml_data!=None:
 			process_data(xml_data)
+			return True
+	return False
 
 def process_data(xml_data):
 	global pos_list
@@ -369,21 +398,36 @@ def process_data(xml_data):
 			pos=Position(data,'xml')
 			pos_list.append(pos)
 
-def load_from_db(user_search=Position.PST_POSITION):
+def load_from_db():
 	global pos_list
 	cur = core.db().cursor()
-	order_by = "name"
-	if user_search == Position.PST_LAST:
-		order_by = "last_turn DESC, type, name"
-	cur.execute("select data from positions where user_id=? ORDER BY " + order_by, (core.user_id(),))
+	cur.execute("select data from positions where user_id=? ORDER BY name", (core.user_id(),))
 	data_list = cur.fetchall()
 	pos_list = []
 	for data in data_list:
 		pos = Position(data[0], 'json')
 		pos_list.append(pos)
 
+def create_html_data():
+	for pos in pos_list:
+		pos.create_html_data()
+
+def update_index():
+	cur = core.db().cursor()
+	cur.execute("select count(1) from turns where user_id=? and downloaded=?", (core.user_id(),0))
+	data = cur.fetchone()
+	turns_downloaded=True
+	if data!=None:
+		if data[0]>0:
+			turns_downloaded=False
+
+	# if index is out of data then regenerate
+	if core.data['last_actions']['gen_index'] < core.data['last_actions']['pos_list'] and turns_downloaded:
+		create_index_page()
+		core.data['last_actions']['gen_index'] = core.data['last_actions']['pos_list']
+		core.save()
+
 def create_index_page():
-	#load_from_db(Position.PST_POSITION)
 	global pos_list,collasped_list
 	out = tree.Output('../images/')
 	out.add_script_file('../tree.js')
@@ -434,6 +478,8 @@ def create_index_page():
 			on=''
 	out.add("</div><div style='height:5px;'></div>\n")
 
+	# render trees
+	create_html_data() # create html sections for postions in list
 	add_style=True
 	on = ''
 	for i,(k,v) in enumerate(Position.search_types.items()):
@@ -457,10 +503,10 @@ def construct_tree(out,add_style=True,user_search=Position.PST_POSITION):
 		out.add_style(t.style)
 	out.add(body)
 
+
 if __name__ == '__main__':
-	#load_from_site()
-	load_from_db()
+	load_from_site()
 	create_index_page()
-
-
+else:
+	load_from_db()
 
