@@ -187,7 +187,7 @@ class Position:
 				turns[turn[0]]=1
 			for turn_day in self.data['turns']:
 				if turn_day not in turns:
-					cur.execute("insert into turns values (?,?,?,?)", (self.data['id'],core.user_id(),turn_day,0))
+					cur.execute("insert into turns values (?,?,?,?,?)", (self.data['id'],self.data['name'],core.user_id(),turn_day,0))
 		core.db().commit()
 
 	def current_tus(self):
@@ -208,14 +208,14 @@ class Position:
 		return tus
 
 	def create_html_data(self):
-		self.data['html']=''
+		self.data['html']=""
 		cur = core.db().cursor()
-		cur.execute("select day from turns where pos_id=? and user_id=? limit 10",(self.data['id'], core.user_id()))
+		cur.execute("select day,file_name from turns where pos_id=? and user_id=? order by day desc limit 10",(self.data['id'], core.user_id()))
 		turn_list = cur.fetchall()
-		for turn_day in turn_list:
-			turn_file=core.turn_path(self.data['id'],turn_day[0])
-			date=core.date(turn_day[0],True)
-			self.data['html']+="<a href='"+turn_file+"' target='on'>"+date+"</a>"
+		for turn in turn_list:
+			turn_file=core.turn_path(turn[1],self.data['id'],turn[0],True)
+			date=core.date(turn[0],True)
+			self.data['html']+="<a class='turn_files' href='"+turn_file+"' target='_blank'>"+date+"</a>"
 
 	def sort_data(self,user_search):
 		day=status.current_day()
@@ -412,26 +412,13 @@ def create_html_data():
 	for pos in pos_list:
 		pos.create_html_data()
 
-def update_index():
-	cur = core.db().cursor()
-	cur.execute("select count(1) from turns where user_id=? and downloaded=?", (core.user_id(),0))
-	data = cur.fetchone()
-	turns_downloaded=True
-	if data!=None:
-		if data[0]>0:
-			turns_downloaded=False
-
-	# if index is out of data then regenerate
-	if core.data['last_actions']['gen_index'] < core.data['last_actions']['pos_list'] and turns_downloaded:
-		create_index_page()
-		core.data['last_actions']['gen_index'] = core.data['last_actions']['pos_list']
-		core.save()
-
 def create_index_page():
 	global pos_list,collasped_list
 	out = tree.Output('../images/')
 	out.add_script_file('../tree.js')
+	out.add_script_file('../phoenix.js')
 	out.add_css_file('../tree.css')
+	out.add_css_file('../main.css')
 	out.title = "Phoenix Turns"
 
 	out.add_style("""div.main {background:col-5;}
@@ -440,33 +427,15 @@ def create_index_page():
 	div.on {background:col-1;color:col-ht;}
 	div.search_tab:hover {cursor: default;}
 	div.search_tabs {width:100%;height:20px;cursor:none; background:col-5;}
+	a:link, a:visited, a:active  { color:col-lt; }
+	a:hover {color:col-lt;}
+	td,th {color: col-st;}
+	div {color: col-st;} 
+	select {color: col-st;}
+	textarea {color: col-st;}
+	body {background:col-bg;}
+	.turn_files {margin:4px;display:block;float:left;}
 	\n""")
-
-	out.add_script("""function activate_tab(index){
-	var list=new Array();
-    var search_tab=new RegExp('search_tab','i'); 
-    var search_data=new RegExp('data_','i');  
-    var divs=document.getElementsByTagName('div');
-    for (var i = 0; i < divs.length; i++)
-    {    if (search_tab.test(divs[i].id))
-		{
-			var id = divs[i].id.substr(11);
-			if (id==index)
-				divs[i].className='search_tab on';
-			else
-				divs[i].className='search_tab';
-		}
-	 	if (search_data.test(divs[i].id))
-		{
-			var id = divs[i].id.substr(5);
-			if (id==index)
-				divs[i].style.display='';
-			else
-				divs[i].style.display='none';
-		}
-	}
-	return list;
-}\n""")
 
 	# add tabs
 	out.add("<div class='main'>\n")
@@ -497,7 +466,7 @@ def create_index_page():
 def construct_tree(out,add_style=True,user_search=Position.PST_POSITION):
 	sort_list(user_search)
 	t = tree.TreeControl(True, False)
-	t.setup('blue', 160, 0, 'std', True)
+	t.setup('blue', 160, user_search, 'std', True)
 	body = t.create(pos_list,cat_list, collasped_cats, closed_list=[])
 	if add_style:
 		out.add_style(t.style)

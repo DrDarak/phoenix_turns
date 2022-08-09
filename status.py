@@ -4,17 +4,19 @@ import urllib.request
 import urllib.error
 import xml.etree.ElementTree as et
 import time
+from datetime import datetime
 
 data = {'last_upload':0}
 last_error=''
 # use overide to make download turns work now
 def load(override=False):
     global last_error
-    # only refresh every hr until 20 hrs has passed from upload
+    # only refresh every hr until 20 hrs has passed from upload and on weekdays
     update_time = 3600
-    if core.data['last_actions']['upload_time']+3600*20< time.time():
+    if core.data['last_actions']['upload_time']+3600*20< time.time() and datetime.today().weekday()<5:
         update_time=600
 
+    # Always loads first time in as game_status is zeroed on init
     if core.data['last_actions']['game_status']+update_time < time.time() or override==True:
         core.data['last_actions']['game_status'] = int(time.time())
         core.save()

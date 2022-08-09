@@ -235,7 +235,7 @@ class Output():
 	def add_script_file(self,file):
 		## single add
 		if file not in self.script_file_list:
-			self.script_file+="<script type='text/javascript' src='"+file+"?v="+Output.VERSION+"'></script>\n";
+			self.script_file+="<script type='text/javascript' src='"+file+"?v="+Output.VERSION+"'></script>\n"
 			self.script_file_list.append(file)
 
 	def colour_replace(self,text):
@@ -284,7 +284,7 @@ if __name__ == '__main__':
 			 {'id': '4', 'cat_id': 1, 'name': 'fourth', 'html': 'o'},
 			{'id':'5','cat_id':2,'name':'fifth','html':'o'}]
 	last_type = -1
-	cnt = 0;
+	cnt = 0
 	collasped_cats = {0:'a',1:'b',2:'c'}
 
 	body=t.create(data_list, cat_types, collasped_cats, closed_list=[])

@@ -19,7 +19,7 @@ class phoenix_core_wrapper:
             os.makedirs(self.position_path)
         self.config_name = self.target_path + 'config.json'
         self.db_name = self.target_path + 'phoenix.db'
-        self.db_con=sql.connect(self.db_name)
+        self.db_con=sql.connect(self.db_name,isolation_level='EXCLUSIVE')
 
         # setup data held by core
         self.load()
@@ -31,7 +31,7 @@ class phoenix_core_wrapper:
         cur = self.db_con.cursor()
         cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name text)')
         cur.execute('CREATE TABLE IF NOT EXISTS positions (id INTEGER, user_id INTEGER,name Text, last_turn INTEGER,type Text,system Text,data TEXT)')
-        cur.execute('CREATE TABLE IF NOT EXISTS turns (pos_id INTEGER, user_id INTEGER,day INTEGER,downloaded INTEGER)')
+        cur.execute('CREATE TABLE IF NOT EXISTS turns (pos_id INTEGER,file_name TEXT, user_id INTEGER,day INTEGER,downloaded INTEGER)')
         self.update_users()
 
     def update_users(self):
@@ -95,9 +95,8 @@ class phoenix_core_wrapper:
                                         'notes':        0,
                                         'items':        0,
                                         'systems':      0,
-                                        'gen_index':    0,
                                         'upload_time':0}  #unix time when site updated
-            # reload game sttus on every restart
+            # reload game status on every restart
             data['last_actions']['game_status'] =0
 
     def save(self):
@@ -120,6 +119,8 @@ def save():
     pcw.save()
 def db():
     return pcw.db_con
+def db_name():
+    return pcw.db_name
 
 ## funtion that work on data only
 def login(user,password):
@@ -171,11 +172,14 @@ def user_position_path():
 def data_path():
     return pcw.target_path
 
-def turn_path(pos_id,turn_day):
+def turn_path(name,pos_id,turn_day,relative=False):
+    file_name= sanitize_string(name + ' (' + str(pos_id) + ')'+'.html')
+    if relative:
+        return './positions/'+data['current_user'] + '/' + str(turn_day) + '/'+ file_name
     day_path = user_position_path() + str(turn_day) + '/'
     if not os.path.exists(day_path):
         os.makedirs(day_path)
-    return day_path + str(pos_id) + '.html'
+    return day_path + file_name
 
 def set_current_user(user):
     global data
@@ -242,3 +246,9 @@ def date(day,add_year=False):
     if add_year:
         return str(year(day)) + '.' +s
     return
+
+def sanitize_string(value):
+    import re
+    value = value.encode('ascii', 'ignore').decode('ascii', 'ignore')
+    value =re.sub("[^\\w\\s.()-]", "", value).strip()
+    return value

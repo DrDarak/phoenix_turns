@@ -3,7 +3,7 @@ from PyQt5 import QtCore,QtGui
 import turns
 from threading import Thread
 import phoenix_core as core
-
+import positions
 
 class TurnUpdate_Dialog(QDialog):
     def __init__(self,parent=None):
@@ -38,6 +38,7 @@ class TurnUpdate_Dialog(QDialog):
     def update_turns(self):
         self.updateButton.setEnabled(False)
         self.doneButton.setEnabled(False)
+        positions.load_from_site()
         update_thread = Thread(target=turns.load,args=(self.progressBar,self.update_turns_finished))
         update_thread.start()
 

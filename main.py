@@ -4,6 +4,7 @@ from dialogs import *
 import phoenix_core as core
 from functools import partial
 import webbrowser
+import positions
 
 
 
@@ -51,21 +52,12 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         ## Start timer for processing turns
         ##self.timer_id=self.startTimer(10000,self.VeryCoarseTimer)
 
-
     def timerEvent(self, event):
         self.showMessage("60 sec","60 sec")
 
-
     def onTrayIconActivated(self, reason):
-        """
-        This function will trigger function on click or double click
-        :param reason:
-        :return:
-        """
         if reason == self.DoubleClick:
-            self.open_notepad()
-        # if reason == self.Trigger:
-        #     self.open_notepad()
+            self.show_turns_window()
 
     def change_user(self,user):
         if core.set_current_user(user)==True:
@@ -100,6 +92,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         dlg.show()
 
     def show_turns_window(self):
+        positions.create_index_page()
         webbrowser.open(core.data_path()+'index.html')
 def main():
     app = QtWidgets.QApplication(sys.argv)
