@@ -1,0 +1,21 @@
+td.turns_body   {	padding: 1px 0px 1px 0px;						}
+table.report	{	background: col-5;	width:100%;					}
+td.report_left	{	background: col-3;	padding: 4px 4px;				}
+td.title_center	{	text-align: center;	font-weight:bold;	background: col-4; 
+			height:30px; 		font-size:10pt;}
+td.report_center{	text-align: center;	background: col-3; 	padding: 4px 4px;}
+td.right_justify{	text-align: right;							}
+td.page_break	{	background: col-3;	padding: 4px 4px;				}
+td.txt		{ 	padding: 2px 4px 2px 10px; 						}
+td.txt_r	{ 	padding: 2px 4px 2px 20px; 						}
+td.blank	{	height:6px; 								}
+td 		{ 	font-family: Verdana, Arial, Helvetica, sans-serifl; font-size:8pt; 	}
+td.title_center {	border-top-left-radius: 8px;border-top-right-radius: 8px; 		}
+
+div.search_data {width:100%;background:col-5;}
+div.search_tab {width:auto;float:left;cursor:default; padding:3px; border: 1px solid col-5;background:col-3;color:col-st;}
+div.on {background:col-1;color:col-ht;}
+div.search_tab:hover {cursor: default;}
+div.search_tabs {width:100%;height:20px;cursor:none; background:col-5;}
+.turn_files {margin:4px;display:block;float:left;}
+.turn_body {border:1px solid col-0;border-radius:8px;}

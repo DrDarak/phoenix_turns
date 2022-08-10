@@ -1,6 +1,5 @@
 import os
 import json
-import phoenix_core as core
 
 class TreeControl:
 	def __init__(self,default_open_cat=True,default_open_data=True):
@@ -15,7 +14,6 @@ class TreeControl:
 		self.cat_expander="images/neg.gif"
 		self.default_open_data=default_open_data
 		self.default_open_cat=default_open_cat
-		self.style = ''
 
 	def setup(self,colour='blue',width=200,id=0,style='std',use_desc=True):
 
@@ -28,8 +26,6 @@ class TreeControl:
 		self.t_d_n_collaspsed="class='t_d_n'"
 		self.t_data_style="margin-left:"+str(width)+"px;"
 		self.cat_expander="images/neg.gif"
-		self.style=''
-		###need to copy style to new file name and convert colour values
 
 		if style=='clear':
 			self.t_cat="class='t_catc'"
@@ -38,13 +34,6 @@ class TreeControl:
 			self.t_d_n_collaspsed="class='t_d_n2'"
 		self.t_cat+=" style='width:"+str(width)+"px'"
 		self.t_c_x="class='t_d_x'"
-
-		s="div.t_element {background: col - 5;}\n"
-		s+="div.t_cat {background: col-3;border - top: 1px solid col-5;}\n"
-		s+="div.t_d_n {background: col-3; border - top: 1px solid col-5;}\n"
-		s+="img.t_d_t2 {background: col-5;}"
-		s+="div.t_d_vl, div.t_d_vlt, div.t_d_vlb, div.t_xd_vl {background: url(images/tree_4.gif);}\n"
-		self.style+=s
 
 	#######################################################
 	## uses $list of format
@@ -198,20 +187,31 @@ class TreeControl:
 """
 class Output():
 	VERSION = "1.0"  # can change later
-	def __init__(self,path):
+	def __init__(self,path,colour='blue'):
 		self.body=''
 		self.style=''
 		self.colour_scheme=None
-		self.colour='blue'
+		self.colour=colour
 		self.load_colours()
-		self.image_path='blue'
 		self.script=''
 		self.script_file=''
 		self.css_file=''
 		self.script_file_list=[]
 		self.css_file_list=[]
-		self.image_path = path
+		self.image_path = path+self.colour+"/"
 		self.title=''
+
+	def convert_file(self,src,dest):
+		read_data=None
+		if os.path.exists(src):
+			with open(src) as f:
+				read_data = f.read()
+				f.close()
+				read_data =self.colour_replace(read_data)
+		if read_data!=None:
+			with open(dest,'w') as f:
+				f.write(read_data)
+				f.close()
 
 	def load_colours(self):
 		file = os.path.dirname(os.path.realpath(__file__)) + '\colour_scheme.json'
@@ -220,12 +220,6 @@ class Output():
 				read_data = f.read()
 				self.colour_scheme = json.loads(read_data)
 				f.close()
-
-	def update_colours(self,colour):
-		## update colour scheme
-		cs=self.colour_scheme[colour]
-		for i,(k,v) in enumerate(reversed(cs).items()):
-			self.style = self.style.replace(k, v)
 
 	def add_css_file(self,file):
 		if file not in self.css_file_list:
@@ -242,8 +236,7 @@ class Output():
 		cs=self.colour_scheme[self.colour]
 		for i,(k,v) in enumerate(cs.items()):
 			text = text.replace(k, v)
-		text=text.replace("images/", self.image_path)
-		return text.replace("colour/", self.image_path+self.colour+"/")
+		return text.replace("images/", self.image_path)
 
 	def add_style(self,style):
 		self.style+=self.colour_replace(style)
@@ -290,6 +283,6 @@ if __name__ == '__main__':
 	body=t.create(data_list, cat_types, collasped_cats, closed_list=[])
 	out.add_style(t.style)
 	out.add(body)
-	f = open(core.data_path() + 'index.html', 'w')
+	f = open(os.path.dirname(os.path.realpath(__file__)) + '/data/index.html', 'w')
 	f.write(out.html())
 	f.close()
