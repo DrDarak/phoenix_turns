@@ -1,16 +1,20 @@
 import phoenix_core as core
-import status
-import positions as pos
 import urllib.request
 import urllib.error
 import sqlite3 as sql
 import os
 from PyQt5.QtWidgets import QProgressBar
+import re
 
 last_error=''
+def  process_turn(data):
+    css="""<header>
+        <link href='../../../main.css' rel='stylesheet' type='text/css' media='all'>
+        <link href='../../../turns.css' rel='stylesheet' type='text/css' media='all'>\n</header>\n"""
+    data=re.sub(r"<style type='text/css'>((.|\n)*?)</style>", css, str(data, 'utf-8', 'ignore'))
+    return re.sub("style='border:1px solid #345487;border-radius:8px;'", "class='turn_body'", data)
 
 def download_turn(name,pos_id,turn_day):
-    global db_con
     req = core.phoenix_request('turn_data&tid=' + str(pos_id))
     if req != None:
         response = None
@@ -21,41 +25,38 @@ def download_turn(name,pos_id,turn_day):
             last_error = e.reason
         if response != None:
             data=response.read()
+            data=process_turn(data)
         if data !="":
             # write file to correct location
             f = open(core.turn_path(name,pos_id,turn_day), 'w')
-            f.write(str(data, 'utf-8', 'ignore'))
+            f.write(data)
             f.close()
             # record as downloaded
-            cur = db_con.cursor()
+            cur = core.db().cursor()
             cur.execute("update turns set downloaded=? where user_id=? and pos_id=? and day=?", (1,core.user_id(),pos_id,turn_day))
-            db_con.commit()
-db_con=None
+            core.db().commit()
+
 def load(progress=None,finished=None):
-    global last_error,db_con
-    db_con = sql.connect(core.db_name())
-    cur = db_con.cursor()
+    global last_error
+    cur = core.db().cursor()
     ## only update if we have not tried already today.
     cur.execute("select file_name,pos_id,day from turns where user_id=? and downloaded=?",(core.user_id(),0))
     turn_list = cur.fetchall()
 
     ## do download
     if progress:
-        progress.setRange(0, len(turn_list)+1)
-        progress.setProperty("value", 0)
+        progress.setRange(0, len(turn_list))
+        progress.setProperty("value", 0) # use set property since it does not call a immediate render (safer)
     cnt = 0
     ## do download
     for turn in turn_list:
         download_turn(turn[0],turn[1],turn[2])
+        core.update_qt()
         if progress:
+            cnt += 1
             progress.setProperty("value", cnt)
-            cnt+=1
     if progress:
         progress.setProperty("value", cnt)
-    db_con.close()
-    db_con = None
-    if finished:
-        finished()
 
 if __name__ == '__main__':
     load()

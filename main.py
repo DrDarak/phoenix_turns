@@ -45,9 +45,12 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         exit_.triggered.connect(lambda: sys.exit())
         exit_.setIcon(QtWidgets.QApplication.style().standardIcon(QtWidgets.QStyle.SP_BrowserStop))
 
-
         self.setContextMenu(self.menu)
-        ##self.activated.connect(self.onTrayIconActivated)
+
+        self.running_login = False
+        self.running_update = False
+        # use qt and update message que if in slow function
+        core.use_qt()
 
         ## Start timer for processing turns
         ##self.timer_id=self.startTimer(10000,self.VeryCoarseTimer)
@@ -61,14 +64,16 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
     def change_user(self,user):
         if core.set_current_user(user)==True:
+            positions.load_from_site()
             self.update_current_user()
 
     def options_window(self):
-        ##dlg = Login_Dialog()
-        ##dlg.exec_()
         pass
 
     def login_window(self):
+        if self.running_login == True:
+            return
+        self.running_login=True
         old_user=core.data['current_user']
         dlg =Login_Dialog()
         dlg.exec_()
@@ -79,6 +84,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             action.triggered.connect(lambda: self.change_user(core.data['current_user']))
             self.users.append(action)
             self.update_current_user()
+        self.running_login = False
 
     def update_current_user(self):
         for action in self.users:
@@ -88,8 +94,12 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
                 action.setIcon(QtGui.QIcon())
 
     def update_turns_window(self):
+        if self.running_update == True:
+            return
+        self.running_update=True
         dlg=TurnUpdate_Dialog()
-        dlg.show()
+        dlg.exec_()
+        self.running_update = False
 
     def show_turns_window(self):
         positions.create_index_page()

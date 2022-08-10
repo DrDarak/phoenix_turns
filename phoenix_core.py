@@ -4,11 +4,22 @@ import urllib.request
 import urllib.parse
 import xml.etree.ElementTree as et
 import sqlite3 as sql
+import tree
+from PyQt5 import QtWidgets, QtCore
 
 version=0.0
 last_error=''
 data=None
 class phoenix_core_wrapper:
+    blank_actions= {'info_data': 0,
+                    'order_data': 0,
+                    'pos_list': 0,
+                    'game_status': 0,  # unix time game_status updated
+                    'notes': 0,
+                    'items': 0,
+                    'systems': 0,
+                    'upload_time': 0}# unix time when site updated
+
     def __init__(self):
         self.current_path = os.path.dirname(os.path.realpath(__file__))
         self.target_path = self.current_path + '/data/'
@@ -20,11 +31,21 @@ class phoenix_core_wrapper:
         self.config_name = self.target_path + 'config.json'
         self.db_name = self.target_path + 'phoenix.db'
         self.db_con=sql.connect(self.db_name,isolation_level='EXCLUSIVE')
-
+        self.use_qt=False
         # setup data held by core
         self.load()
         self.create_db()  # after load()
-        self.update()
+        self.update_data()
+        self.set_colour()
+
+    def set_colour(self):
+        global data
+        out=tree.Output('../images/',data['colour'])
+        out.convert_file(self.current_path+'/turns.css',self.target_path+'turns.css')
+        out.convert_file(self.current_path + '/tree.css', self.target_path + 'tree.css')
+        out.convert_file(self.current_path + '/main.css', self.target_path + 'main.css')
+       #if os.path.exists(self.config_name):
+        #    os.replace(self.config_name, self.target_path + 'config.bak')
 
     def create_db(self):
         global data
@@ -53,7 +74,7 @@ class phoenix_core_wrapper:
         self.db_con.commit()
         return self.find_user_id(user)
 
-    def update(self):
+    def update_data(self):
         global version
         if float(data['version'])>=version:
             return
@@ -74,10 +95,7 @@ class phoenix_core_wrapper:
                     read_data = f.read()
                     data = json.loads(read_data)
                     f.close()
-            if 'positions' not in data:
-                data['positions'] = {}
-            if 'last_download' not in data:
-                data['last_download'] = -1
+
             if 'year_start' not in data:
                 data['year_start'] = [0, 265, 525, 785, 1045, 1305, 1565, 1830, 2090, 2350, 2615, 2875, 3135, 3395,
                                       3655, 3920, 4180, 4440, 4700, 4965, 5225]
@@ -87,15 +105,10 @@ class phoenix_core_wrapper:
                 data['current_user'] = 'None'
             if 'version' not in data:
                 data['version'] = version
+            if 'colour' not in data:
+                data['colour'] = 'blue'
             if 'last_actions' not in data:
-                data['last_actions']={'info_data':      0,
-                                        'order_data':   0,
-                                        'pos_list':     0,
-                                        'game_status':  0, #unix time game_status updated
-                                        'notes':        0,
-                                        'items':        0,
-                                        'systems':      0,
-                                        'upload_time':0}  #unix time when site updated
+                data['last_actions']=phoenix_core_wrapper.blank_actions
             # reload game status on every restart
             data['last_actions']['game_status'] =0
 
@@ -112,6 +125,10 @@ class phoenix_core_wrapper:
     def __del__(self):
         self.db_con.close()
 
+    def update_qt(self):
+        if self.use_qt:
+            QtWidgets.qApp.processEvents(QtCore.QEventLoop.AllEvents,50)  # process events for app so it does not freeze in the loop
+
 pcw=phoenix_core_wrapper()
 
 ## functions that use wrapper class
@@ -121,6 +138,10 @@ def db():
     return pcw.db_con
 def db_name():
     return pcw.db_name
+def update_qt():
+    pcw.update_qt()
+def use_qt():
+    pcw.use_qt=True
 
 ## funtion that work on data only
 def login(user,password):
@@ -186,7 +207,7 @@ def set_current_user(user):
     if user != data['current_user']:
         if user in data['users']:
             data['current_user']=user
-            data['last_download'] = -1
+            data['last_actions'] = phoenix_core_wrapper.blank_actions # reset actions for user
             save()
             if not os.path.exists(user_position_path()):
                 os.makedirs(user_position_path())

@@ -6,6 +6,7 @@ import urllib.error
 import json
 import tree
 import re
+import time
 import sqlite3 as sql
 
 class Position:
@@ -174,7 +175,7 @@ class Position:
 			cur.execute("insert into positions values (?,?,?,?,?,?,?)", query)
 		else:
 			query = (self.last_turn(), self.data['type_name'], self.data['name'], self.data['system'], json.dumps(self.data),self.data['id'], core.user_id())
-			cur.execute("update positions SET name=?,last_turn=?,type_name=?,system=?,data=? where id=? and user_id=?",query)
+			cur.execute("update positions SET name=?,last_turn=?,type=?,system=?,data=? where id=? and user_id=?",query)
 
 		#write positons turn to database if they are not already present
 		if 'turns' in self.data:
@@ -283,7 +284,7 @@ class Position:
 				cat_name = '300 Tus'
 			else:
 				self.sort = 30 * int(tus / 30)
-				cat_name =str(self.sort)+" <img src='colour/r_arr.gif'/> "
+				cat_name =str(self.sort)+" <img src='images/r_arr.gif'/> "
 				if (tus+30 > 300):
 					cat_name+='300 Tus'
 				else:
@@ -301,7 +302,7 @@ class Position:
 				cat_name = '100%'
 			else:
 				dmg = float(10 * int(dmg / 10))
-				cat_name = str(dmg)+"% <img src='colour/r_arr.gif'/> "
+				cat_name = str(dmg)+"% <img src='images/r_arr.gif'/> "
 				if dmg+10 >= 100:
 					cat_name+='100%'
 				else:
@@ -316,7 +317,7 @@ class Position:
 				cat_name = '100%'
 			else:
 				integrity = float(10 * int(integrity / 10))
-				cat_name = str(integrity) + "% <img src='colour/r_arr.gif'/> "
+				cat_name = str(integrity) + "% <img src='images/r_arr.gif'/> "
 				if integrity + 10 >= 100:
 					cat_name += '100%'
 				else:
@@ -329,7 +330,7 @@ class Position:
 				cat_name = 'Recreation not used'
 			else:
 				rec = 10 * (int)(rec / 10)
-				cat_name =str(rec)+" <img src='colour/r_arr.gif'/> "+str(rec+10)+' Weeks'
+				cat_name =str(rec)+" <img src='images/r_arr.gif'/> "+str(rec+10)+' Weeks'
 			self.sort=int(rec)
 			self['cat_id'] = int(rec)
 		self['ext_name']=self['name']+" ("+str(self['id'])+")"
@@ -375,6 +376,10 @@ pos_list=[]
 last_error=''
 
 def load_from_site():
+	core.data['last_actions']['pos_list'] = status.data['current_day']
+	core.data['last_actions']['upload_time'] = int(time.time())
+	core.save()
+
 	global last_error
 	req=core.phoenix_request('pos_list')
 	if req!=None:
@@ -395,6 +400,7 @@ def process_data(xml_data):
 	root = tree.getroot()
 	for child in root:
 		for data in child:
+			core.update_qt()
 			pos=Position(data,'xml')
 			pos_list.append(pos)
 
@@ -414,28 +420,17 @@ def create_html_data():
 
 def create_index_page():
 	global pos_list,collasped_list
-	out = tree.Output('../images/')
+	if status.reload_positions():
+		load_from_site()
+
+	# setup output class
+	out = tree.Output('../images/',core.data['colour'])
 	out.add_script_file('../tree.js')
 	out.add_script_file('../phoenix.js')
-	out.add_css_file('../tree.css')
-	out.add_css_file('../main.css')
+	out.add_css_file('./tree.css')
+	out.add_css_file('./main.css')
+	out.add_css_file('./turns.css')
 	out.title = "Phoenix Turns"
-
-	out.add_style("""div.main {background:col-5;}
-	div.search_data {width:100%;background:col-5;}
-	div.search_tab {width:auto;float:left;cursor:default; padding:3px; border: 1px solid col-5;background:col-3;color:col-st;}
-	div.on {background:col-1;color:col-ht;}
-	div.search_tab:hover {cursor: default;}
-	div.search_tabs {width:100%;height:20px;cursor:none; background:col-5;}
-	a:link, a:visited, a:active  { color:col-lt; }
-	a:hover {color:col-lt;}
-	td,th {color: col-st;}
-	div {color: col-st;} 
-	select {color: col-st;}
-	textarea {color: col-st;}
-	body {background:col-bg;}
-	.turn_files {margin:4px;display:block;float:left;}
-	\n""")
 
 	# add tabs
 	out.add("<div class='main'>\n")
@@ -449,13 +444,11 @@ def create_index_page():
 
 	# render trees
 	create_html_data() # create html sections for postions in list
-	add_style=True
 	on = ''
 	for i,(k,v) in enumerate(Position.search_types.items()):
 		out.add("<div id='data_"+str(k)+"' style='display:"+on+"' class='search_data'>\n")
-		construct_tree(out,add_style,int(k))
+		construct_tree(out,int(k))
 		out.add("</div>\n")
-		add_style = False
 		if i == 0:
 			on='none'
 	out.add("</div>\n")
@@ -463,15 +456,12 @@ def create_index_page():
 	f.write(out.html())
 	f.close()
 
-def construct_tree(out,add_style=True,user_search=Position.PST_POSITION):
+def construct_tree(out,user_search=Position.PST_POSITION):
 	sort_list(user_search)
 	t = tree.TreeControl(True, False)
-	t.setup('blue', 160, user_search, 'std', True)
+	t.setup(core.data['colour'], 160, user_search, 'std', True)
 	body = t.create(pos_list,cat_list, collasped_cats, closed_list=[])
-	if add_style:
-		out.add_style(t.style)
 	out.add(body)
-
 
 if __name__ == '__main__':
 	load_from_site()

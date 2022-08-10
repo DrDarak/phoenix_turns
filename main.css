@@ -45,3 +45,12 @@ td.nbl { border-left:none;}
 .radius_8 {border-radius:8px; -moz-border-radius: 8px;}
 /*.ic  {margin-bottom:-2px;}*/
 /*@-moz-document url-prefix() {.ic  {margin-bottom:-3px;}*/
+
+div.main {background:col-5;}
+a:link, a:visited, a:active  { color:col-lt; }
+a:hover {color:col-lt;}
+td,th {color: col-st;}
+div {color: col-st;}
+select {color: col-st;}
+textarea {color: col-st;}
+body {background:col-bg;}

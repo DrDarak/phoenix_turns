@@ -38,14 +38,13 @@ class TurnUpdate_Dialog(QDialog):
     def update_turns(self):
         self.updateButton.setEnabled(False)
         self.doneButton.setEnabled(False)
+        self.update()
         positions.load_from_site()
-        update_thread = Thread(target=turns.load,args=(self.progressBar,self.update_turns_finished))
-        update_thread.start()
-
-    def update_turns_finished(self):
+        turns.load(self.progressBar)
         self.updateButton.setEnabled(True)
         self.doneButton.setEnabled(True)
         self.progressBar.setProperty("value", 0)
+
 
 ## Login button to convert passowrd to code/uid
 class Login_Dialog(QDialog):

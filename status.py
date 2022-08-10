@@ -4,6 +4,7 @@ import urllib.request
 import urllib.error
 import xml.etree.ElementTree as et
 import time
+import sys
 from datetime import datetime
 
 data = {'last_upload':0}
@@ -55,11 +56,11 @@ def process_data(xml_data):
             if year_start not in core.data['year_start']:
                 core.data['year_start'].append(year_start)
                 core.save()
-        if data['last_upload'] > core.data['last_actions']['pos_list']:
-            if positions.load_from_site():
-                core.data['last_actions']['pos_list'] = data['current_day']
-                core.data['last_actions']['upload_time']=int(time.time())
-                core.save()
+
+def reload_positions():
+    if data['last_upload'] > core.data['last_actions']['pos_list']:
+        return True
+    return False
 
 def current_day():
     if check_loaded():
@@ -72,5 +73,4 @@ def check_loaded():
     if 'year_start' not in data:
         return False
     return True
-if __name__ == '__main__':
-    load()
+load()
