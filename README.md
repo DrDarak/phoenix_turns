@@ -10,6 +10,5 @@ pip install pyqt5
 
 pip install pyinstaller
 
-
-#ignore installer info
-pyinstaller --icon=phoenix.ico --add-data="phoenix_32x32.png;." --add-data="phoenix.ico;." --noconsole main.py
+#installer info
+pyinstaller installer.spec
