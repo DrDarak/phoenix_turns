@@ -46,7 +46,7 @@ td.nbl { border-left:none;}
 /*.ic  {margin-bottom:-2px;}*/
 /*@-moz-document url-prefix() {.ic  {margin-bottom:-3px;}*/
 
-div.main {background:col-5;}
+div.main {background:col-5;overflow: hidden;min-width:1080px}
 a:link, a:visited, a:active  { color:col-lt; }
 a:hover {color:col-lt;}
 td,th {color: col-st;}

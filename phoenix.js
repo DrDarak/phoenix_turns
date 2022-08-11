@@ -22,3 +22,20 @@ function activate_tab(index)
 		}
 	}
 }
+
+////////////////////////////////////////////////////////////////////////////////////
+// Turn display handling - needs to fail gracefully if we don't have access
+function display_turn(file_name)
+{
+    var box=get_object('turn_frame');
+    if (box)
+       box.src=file_name
+    var lp=get_object('left_panel');
+    var rp=get_object('right_panel');
+    if (lp && rp)
+        var h=lp.clientHeight
+        if (h<6000)
+            h=6000;
+        rp.style.height=h;
+
+}

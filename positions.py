@@ -213,11 +213,17 @@ class Position:
 		cur = core.db().cursor()
 		cur.execute("select day,file_name from turns where pos_id=? and user_id=? order by day desc limit 10",(self.data['id'], core.user_id()))
 		turn_list = cur.fetchall()
+		first_file=None
 		for turn in turn_list:
 			turn_file=core.turn_path(turn[1],self.data['id'],turn[0],True)
+			if first_file==None:
+				first_file=turn_file
 			date=core.date(turn[0],True)
-			self.data['html']+="<a class='turn_files' href='"+turn_file+"' target='_blank'>"+date+"</a>"
-
+			self.data['html']+="<div class='turn_link'><div class='file_icon'>" \
+							   "<a href='"+turn_file+"' target='_blank'></a></div>"\
+							   "<a class='turn_files' href='javascript:display_turn(\"" + turn_file + "\")'>" + date + "</a></div>"
+		if first_file:
+			self.data['ext_name']="<a href='javascript:display_turn(\""+first_file+"\")'>"+self.data['name']+" ("+str(self.data['id'])+")</a>"
 	def sort_data(self,user_search):
 		day=status.current_day()
 		tus=self.current_tus()
@@ -333,7 +339,8 @@ class Position:
 				cat_name =str(rec)+" <img src='images/r_arr.gif'/> "+str(rec+10)+' Weeks'
 			self.sort=int(rec)
 			self['cat_id'] = int(rec)
-		self['ext_name']=self['name']+" ("+str(self['id'])+")"
+		if 'ext_name' not in self:
+			self['ext_name']=self['name']+" ("+str(self['id'])+")"
 		return cat_name
 
 
@@ -434,6 +441,7 @@ def create_index_page():
 
 	# add tabs
 	out.add("<div class='main'>\n")
+	out.add("<div id='left_panel'>\n")
 	out.add("<div class='search_tabs'>\n")
 	on = ' on'
 	for i, (k, v) in enumerate(Position.search_types.items()):
@@ -451,6 +459,10 @@ def create_index_page():
 		out.add("</div>\n")
 		if i == 0:
 			on='none'
+	out.add("</div>\n")
+	out.add("<div id='right_panel'>\n")
+	out.add("<iframe width='100%' frameborder=0 id='turn_frame' src = '' onload='javascript:frame_load(this)'> </iframe>")
+	out.add("</div>\n")
 	out.add("</div>\n")
 	f = open(core.data_path() + 'index.html', 'w')
 	f.write(out.html())
