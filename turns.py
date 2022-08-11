@@ -15,6 +15,7 @@ def  process_turn(data):
     return re.sub("style='border:1px solid #345487;border-radius:8px;'", "class='turn_body'", data)
 
 def download_turn(name,pos_id,turn_day):
+    global last_error
     req = core.phoenix_request('turn_data&tid=' + str(pos_id))
     if req != None:
         response = None
@@ -37,7 +38,6 @@ def download_turn(name,pos_id,turn_day):
             core.db().commit()
 
 def load(progress=None,finished=None):
-    global last_error
     cur = core.db().cursor()
     ## only update if we have not tried already today.
     cur.execute("select file_name,pos_id,day from turns where user_id=? and downloaded=?",(core.user_id(),0))
@@ -57,6 +57,14 @@ def load(progress=None,finished=None):
             progress.setProperty("value", cnt)
     if progress:
         progress.setProperty("value", cnt)
+
+def update():
+    global last_error
+    cur = core.db().cursor()
+    cur.execute("select count(1) from turns where user_id=? and downloaded=?",(core.user_id(),0))
+    turn_cnt = cur.fetchone()
+    if turn_cnt and turn_cnt[0]>0:
+        load()
 
 if __name__ == '__main__':
     load()

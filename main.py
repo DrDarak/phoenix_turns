@@ -1,11 +1,11 @@
 import sys
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui,QtCore
 from dialogs import *
 import phoenix_core as core
 from functools import partial
 import webbrowser
 import positions
-
+import status
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
@@ -37,6 +37,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.update_turns.triggered.connect(self.update_turns_window)
         self.update_turns.setIcon(QtGui.QIcon("phoenix_32x32.png"))
 
+        self.options_action = self.menu.addAction("Options")
+        self.options_action.triggered.connect(self.options_window)
+
         self.login_action = self.menu.addAction("Login")
         self.login_action.setIcon(QtWidgets.QApplication.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
         self.login_action.triggered.connect(self.login_window)
@@ -49,14 +52,24 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         self.running_login = False
         self.running_update = False
-        # use qt and update message que if in slow function
+        # use qt and update message que if in slow functions
         core.use_qt()
 
-        ## Start timer for processing turns
-        ##self.timer_id=self.startTimer(10000,self.VeryCoarseTimer)
+        ## Start timer for processing turns every 5 mins
+        self.timer_id=self.startTimer(5*60*1000)
 
     def timerEvent(self, event):
-        self.showMessage("60 sec","60 sec")
+        if self.running_update== False:
+            self.download_turns()
+
+    def download_turns(self):
+        # checks status every 10 mins -> 1 hr
+        status.load()
+        # if new day downloads positions
+        if status.reload_positions():
+            positions.load_from_site()
+        # any undownloaded position trigger a download
+        turns.update()
 
     def onTrayIconActivated(self, reason):
         if reason == self.DoubleClick:
