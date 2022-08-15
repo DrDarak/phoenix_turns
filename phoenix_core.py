@@ -21,7 +21,7 @@ class phoenix_core_wrapper:
                     'upload_time': 0}# unix time when site updated
 
     def __init__(self):
-        self.current_path = os.path.dirname(os.path.realpath(__file__))
+        self.current_path = os.getcwd()
         self.target_path = self.current_path + '/data/'
         if not os.path.exists(self.target_path):
             os.makedirs(self.target_path)
@@ -273,3 +273,6 @@ def sanitize_string(value):
     value = value.encode('ascii', 'ignore').decode('ascii', 'ignore')
     value =re.sub("[^\\w\\s.()-]", "", value).strip()
     return value
+
+if __name__ == '__main__':
+    print(pcw.current_path)

@@ -214,7 +214,7 @@ class Output():
 				f.close()
 
 	def load_colours(self):
-		file = os.path.dirname(os.path.realpath(__file__)) + '\colour_scheme.json'
+		file = os.getcwd() + '\colour_scheme.json'
 		if os.path.exists(file):
 			with open(file) as f:
 				read_data = f.read()
