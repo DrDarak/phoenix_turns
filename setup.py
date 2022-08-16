@@ -17,7 +17,7 @@ build_exe_options = {"excludes": ["tkinter"], # need to exclude a lot
                                       'turns.css',
                                       'images'
                                       ],
-                      'build_exe': './dist',
+                      'build_exe': './app',
                      }
 
 

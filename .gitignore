@@ -3,6 +3,7 @@ data
 __pycache__
 *.pyc
 dist
+app
 build
-main.spec
 test.py
+Phoenix_Turns Setup.exe

@@ -383,7 +383,7 @@ pos_list=[]
 last_error=''
 
 def load_from_site():
-	core.data['last_actions']['pos_list'] = status.data['current_day']
+	core.data['last_actions']['pos_list'] = status.current_day()
 	core.data['last_actions']['upload_time'] = int(time.time())
 	core.save()
 
@@ -431,9 +431,9 @@ def create_index_page():
 		load_from_site()
 
 	# setup output class
-	out = tree.Output('../images/',core.data['colour'])
-	out.add_script_file('../tree.js')
-	out.add_script_file('../phoenix.js')
+	out = tree.Output('images/',core.data['colour'],core.install_path())
+	out.add_script_file(core.install_path()+'/tree.js')
+	out.add_script_file(core.install_path()+'/phoenix.js')
 	out.add_css_file('./tree.css')
 	out.add_css_file('./main.css')
 	out.add_css_file('./turns.css')

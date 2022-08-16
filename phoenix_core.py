@@ -1,4 +1,5 @@
-import os 
+import os
+import sys
 import json
 import urllib.request
 import urllib.parse
@@ -6,6 +7,9 @@ import xml.etree.ElementTree as et
 import sqlite3 as sql
 import tree
 from PyQt5 import QtWidgets, QtCore
+from distutils.dir_util import copy_tree
+import winreg
+
 
 version=0.0
 last_error=''
@@ -21,8 +25,15 @@ class phoenix_core_wrapper:
                     'upload_time': 0}# unix time when site updated
 
     def __init__(self):
-        self.current_path = os.getcwd()
-        self.target_path = self.current_path + '/data/'
+        self.install_path=None
+        try:
+            registry_key = winreg.OpenKeyEx(winreg.HKEY_CURRENT_USER, 'SOFTWARE\Skeletal\PhoenixTurns')
+            (self.install_path, k) = winreg.QueryValueEx(registry_key, 'Path')
+            winreg.CloseKey(registry_key)
+        except:
+            if not getattr(sys, "frozen", False):
+                self.install_path =os.path.dirname(__file__)
+        self.target_path = os.path.expanduser('~/AppData/Local/phoenix_turns/')
         if not os.path.exists(self.target_path):
             os.makedirs(self.target_path)
         self.position_path = self.target_path + 'positions/'
@@ -40,12 +51,16 @@ class phoenix_core_wrapper:
 
     def set_colour(self):
         global data
-        out=tree.Output('../images/',data['colour'])
-        out.convert_file(self.current_path+'/turns.css',self.target_path+'turns.css')
-        out.convert_file(self.current_path + '/tree.css', self.target_path + 'tree.css')
-        out.convert_file(self.current_path + '/main.css', self.target_path + 'main.css')
-       #if os.path.exists(self.config_name):
-        #    os.replace(self.config_name, self.target_path + 'config.bak')
+        out=tree.Output('images/',data['colour'],self.install_path)
+        out.convert_file(self.install_path+'/turns.css',self.target_path+'turns.css')
+        out.convert_file(self.install_path + '/tree.css', self.target_path + 'tree.css')
+        out.convert_file(self.install_path + '/main.css', self.target_path + 'main.css')
+
+        # create image directory
+        src=self.install_path+'/images'
+        dest=self.target_path+'/images'
+        if not os.path.exists(dest):
+            copy_tree(src,dest)
 
     def create_db(self):
         global data
@@ -142,6 +157,9 @@ def update_qt():
     pcw.update_qt()
 def use_qt():
     pcw.use_qt=True
+def install_path():
+    return pcw.install_path
+
 
 ## funtion that work on data only
 def login(user,password):
@@ -274,5 +292,9 @@ def sanitize_string(value):
     value =re.sub("[^\\w\\s.()-]", "", value).strip()
     return value
 
+
+
+
 if __name__ == '__main__':
-    print(pcw.current_path)
+    print(pcw.target_path)
+    print(pcw.install_path)

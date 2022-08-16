@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 
 class TreeControl:
@@ -187,11 +188,12 @@ class TreeControl:
 """
 class Output():
 	VERSION = "1.0"  # can change later
-	def __init__(self,path,colour='blue'):
+	def __init__(self,path,colour,config_path):
 		self.body=''
 		self.style=''
 		self.colour_scheme=None
 		self.colour=colour
+		self.config_path = config_path
 		self.load_colours()
 		self.script=''
 		self.script_file=''
@@ -214,7 +216,7 @@ class Output():
 				f.close()
 
 	def load_colours(self):
-		file = os.getcwd() + '\colour_scheme.json'
+		file = self.config_path+'/colour_scheme.json'
 		if os.path.exists(file):
 			with open(file) as f:
 				read_data = f.read()

@@ -10,5 +10,10 @@ pip install pyqt5
 
 pip install pyinstaller
 
+
 #installer info
+nx_Freeze
 python setup.py build_exe
+
+NullScript Scriptable Install System (NSIS)
+setup.nis

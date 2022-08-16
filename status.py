@@ -69,7 +69,7 @@ def current_day():
 def check_loaded():
     global data
     if 'year_start' not in data:
-        load()
+        load(True)
     if 'year_start' not in data:
         return False
     return True
