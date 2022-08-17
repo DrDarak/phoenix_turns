@@ -11,7 +11,7 @@
   !define VERSION "0.1"
   !define SLUG "${NAME} v${VERSION}"
   !define REG_NAME "Skeletal\PhoenixTurns"
-
+  !define REG_DIR "PhoenixTurns"
 ;--------------------------------
 ; General
 
@@ -65,7 +65,11 @@
     SetOutPath "$INSTDIR"
     File /r "app\*.*" 
     WriteRegStr HKCU "Software\${REG_NAME}" "Path" $INSTDIR
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "PhoenixTurns" '"$INSTDIR\${APPFILE}"'
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${REG_DIR}" '"$INSTDIR\${APPFILE}"'
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${REG_DIR}" "DisplayName" "Phoenix Turns Downloader"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${REG_DIR}" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${REG_DIR}" "DisplayIcon" '"$INSTDIR\${APPFILE}"'
+
     WriteUninstaller "$INSTDIR\Uninstall.exe"
   SectionEnd
 
@@ -82,8 +86,9 @@ Section "Uninstall"
   ;Delete Folder
   RMDir /r "$INSTDIR"
 
-  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "PhoenixTurns"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${REG_DIR}"
   DeleteRegValue HKCU "Software\${REG_NAME}" "Path"
   DeleteRegKey /ifempty HKCU "Software\${REG_NAME}"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${REG_DIR}"
 
 SectionEnd
