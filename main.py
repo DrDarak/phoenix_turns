@@ -19,7 +19,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         self.show_turns = self.menu.addAction("Show Turns")
         self.show_turns.triggered.connect(self.show_turns_window)
-        self.show_turns.setIcon(QtGui.QIcon("phoenix_32x32.png"))
+        self.show_turns.setIcon(QtGui.QIcon(core.install_path()+"phoenix_32x32.png"))
 
         self.separator_1 = self.menu.addSeparator()
 
@@ -35,7 +35,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         self.update_turns = self.menu.addAction("Update Turns")
         self.update_turns.triggered.connect(self.update_turns_window)
-        self.update_turns.setIcon(QtGui.QIcon("phoenix_32x32.png"))
+        self.update_turns.setIcon(QtGui.QIcon(core.install_path()+"phoenix_32x32.png"))
 
         self.options_action = self.menu.addAction("Options")
         self.options_action.triggered.connect(self.options_window)
@@ -102,7 +102,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def update_current_user(self):
         for action in self.users:
             if action.text()==core.data['current_user']:
-                action.setIcon(QtGui.QIcon("tick.png"))
+                action.setIcon(QtGui.QIcon(core.install_path()+"tick.png"))
             else:
                 action.setIcon(QtGui.QIcon())
 
@@ -121,7 +121,7 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     w = QtWidgets.QWidget()
-    tray_icon = SystemTrayIcon(QtGui.QIcon("phoenix_32x32.png"), w)
+    tray_icon = SystemTrayIcon(QtGui.QIcon(core.install_path()+"phoenix_32x32.png"), w)
     tray_icon.show()
     ##  tray_icon.showMessage('Title', 'Hello "Name of logged in ID')
     app.exec_()

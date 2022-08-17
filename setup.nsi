@@ -8,7 +8,7 @@
 ; Custom defines
   !define NAME "Phoenix_Turns"
   !define APPFILE "phoenix_turns.exe"
-  !define VERSION "1.0.0"
+  !define VERSION "0.1"
   !define SLUG "${NAME} v${VERSION}"
   !define REG_NAME "Skeletal\PhoenixTurns"
 
@@ -16,7 +16,7 @@
 ; General
 
   Name "${NAME}"
-  OutFile "${NAME} Setup.exe"
+  OutFile "release\${NAME} Setup v${VERSION}.exe"
   InstallDir "$PROGRAMFILES\${NAME}"
   InstallDirRegKey HKCU "Software\${REG_NAME}" ""
   RequestExecutionLevel admin
@@ -65,7 +65,7 @@
     SetOutPath "$INSTDIR"
     File /r "app\*.*" 
     WriteRegStr HKCU "Software\${REG_NAME}" "Path" $INSTDIR
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "PhoenixTurns" "$INSTDIR\${APPFILE}"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "PhoenixTurns" '"$INSTDIR\${APPFILE}"'
     WriteUninstaller "$INSTDIR\Uninstall.exe"
   SectionEnd
 

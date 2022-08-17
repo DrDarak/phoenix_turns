@@ -432,8 +432,8 @@ def create_index_page():
 
 	# setup output class
 	out = tree.Output('images/',core.data['colour'],core.install_path())
-	out.add_script_file(core.install_path()+'/tree.js')
-	out.add_script_file(core.install_path()+'/phoenix.js')
+	out.add_script_file(core.install_path()+'tree.js')
+	out.add_script_file(core.install_path()+'phoenix.js')
 	out.add_css_file('./tree.css')
 	out.add_css_file('./main.css')
 	out.add_css_file('./turns.css')

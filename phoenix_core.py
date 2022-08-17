@@ -33,6 +33,8 @@ class phoenix_core_wrapper:
         except:
             if not getattr(sys, "frozen", False):
                 self.install_path =os.path.dirname(__file__)
+        if self.install_path and len(self.install_path)>10: # add slash if there is a signican path - don't create route path
+            self.install_path+="/"
         self.target_path = os.path.expanduser('~/AppData/Local/phoenix_turns/')
         if not os.path.exists(self.target_path):
             os.makedirs(self.target_path)
@@ -52,9 +54,9 @@ class phoenix_core_wrapper:
     def set_colour(self):
         global data
         out=tree.Output('images/',data['colour'],self.install_path)
-        out.convert_file(self.install_path+'/turns.css',self.target_path+'turns.css')
-        out.convert_file(self.install_path + '/tree.css', self.target_path + 'tree.css')
-        out.convert_file(self.install_path + '/main.css', self.target_path + 'main.css')
+        out.convert_file(self.install_path+'turns.css',self.target_path+'turns.css')
+        out.convert_file(self.install_path + 'tree.css', self.target_path + 'tree.css')
+        out.convert_file(self.install_path + 'main.css', self.target_path + 'main.css')
 
         # create image directory
         src=self.install_path+'/images'
