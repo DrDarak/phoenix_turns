@@ -81,6 +81,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             self.update_current_user()
 
     def options_window(self):
+        dlg =Options_Dialog()
+        dlg.exec_()
         pass
 
     def login_window(self):

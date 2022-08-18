@@ -168,7 +168,10 @@ def use_qt():
     pcw.use_qt=True
 def install_path():
     return pcw.install_path
-
+def set_colour(colour):
+    data['colour']=colour
+    pcw.set_colour()
+    pcw.save()
 
 ## funtion that work on data only
 def login(user,password):
@@ -306,7 +309,6 @@ def sanitize_string(value):
     value = value.encode('ascii', 'ignore').decode('ascii', 'ignore')
     value =re.sub("[^\\w\\s.()-]", "", value).strip()
     return value
-
 
 
 

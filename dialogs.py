@@ -1,9 +1,10 @@
-from PyQt5.QtWidgets import QDialog, QPushButton,QProgressBar,QLabel,QLineEdit,QMessageBox
+from PyQt5.QtWidgets import QDialog, QPushButton,QProgressBar,QLabel,QLineEdit,QMessageBox,QComboBox
 from PyQt5 import QtCore,QtGui
 import turns
 from threading import Thread
 import phoenix_core as core
 import positions
+import tree
 
 class TurnUpdate_Dialog(QDialog):
     def __init__(self,parent=None):
@@ -103,3 +104,31 @@ class Login_Dialog(QDialog):
         msg.setWindowTitle("Login Failed")
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
+
+
+class Options_Dialog(QDialog):
+    def __init__(self,parent=None):
+        super().__init__(parent)
+
+        self.setWindowIcon(QtGui.QIcon("phoenix_32x32.png"))
+        self.setModal(True)
+        self.setWindowTitle("Phoenix Downloader Options")
+        self.setFixedSize(280, 46)
+
+        self.label = QLabel(self)
+        self.label.setObjectName(u"label")
+        self.label.setGeometry(QtCore.QRect(10, 10, 111, 21))
+        self.label.setText(u"Position Browser Colour")
+
+        self.comboBox = QComboBox(self)
+        self.comboBox.setObjectName(u"comboBox")
+        self.comboBox.setGeometry(QtCore.QRect(130, 10, 140, 22))
+
+        out = tree.Output('images/', 'blue', core.install_path())
+        for k,v in enumerate(out.colour_scheme):
+            self.comboBox.addItem(v)
+        self.comboBox.currentIndexChanged.connect(self.index_changed)
+
+    def index_changed(self, index):
+        colour=self.comboBox.currentText()
+        core.set_colour(colour)
