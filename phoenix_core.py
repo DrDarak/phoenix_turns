@@ -9,6 +9,7 @@ import tree
 from PyQt5 import QtWidgets, QtCore
 from distutils.dir_util import copy_tree
 import winreg
+import time
 
 
 version=0.0
@@ -145,6 +146,12 @@ class phoenix_core_wrapper:
     def update_qt(self):
         if self.use_qt:
             QtWidgets.qApp.processEvents(QtCore.QEventLoop.AllEvents,50)  # process events for app so it does not freeze in the loop
+    def log_request(self,request_type):
+        with open(self.target_path +"log.txt", 'a') as f:
+            s=time.strftime("%d/%m/%y %H:%m:%S")+" - "+request_type+"\r\n"
+            f.write(s)
+            f.close()
+
 
 pcw=phoenix_core_wrapper()
 
@@ -258,9 +265,15 @@ def user_code():
             if 'code' in user:
                 return user['code']
     return ''
+
+
+
 def phoenix_request(request_type):
     if has_user():
+        pcw.log_request(request_type)
         return urllib.request.Request('https://www.phoenixbse.com/index.php?a=xml&sa=' +request_type+'&uid=' + str(site_id()) + '&code=' + user_code())
+
+
     return None
 
 def year(day):
