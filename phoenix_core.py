@@ -148,7 +148,7 @@ class phoenix_core_wrapper:
             QtWidgets.qApp.processEvents(QtCore.QEventLoop.AllEvents,50)  # process events for app so it does not freeze in the loop
     def log_request(self,request_type):
         with open(self.target_path +"log.txt", 'a') as f:
-            s=time.strftime("%d/%m/%y %H:%m:%S")+" - "+request_type+"\r\n"
+            s=time.strftime("%d/%m/%y %H:%M:%S")+" - "+request_type+"\n"
             f.write(s)
             f.close()
 
