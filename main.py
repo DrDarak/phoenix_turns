@@ -63,6 +63,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             self.download_turns()
 
     def download_turns(self):
+        if self.running_update == True:
+            return
+        self.setToolTip(f'Phoenix Turn Downloader - Downloading')
         # checks status every 10 mins -> 1 hr
         status.load()
         # if new day downloads positions
@@ -70,6 +73,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             positions.load_from_site()
         # any undownloaded position trigger a download
         turns.update()
+        self.setToolTip(f'Phoenix Turn Downloader')
 
     def onTrayIconActivated(self, reason):
         if reason == self.DoubleClick:
@@ -125,7 +129,7 @@ def main():
     w = QtWidgets.QWidget()
     tray_icon = SystemTrayIcon(QtGui.QIcon(core.install_path()+"phoenix_32x32.png"), w)
     tray_icon.show()
-    ##  tray_icon.showMessage('Title', 'Hello "Name of logged in ID')
+    ##tray_icon.showMessage('Title', 'Hello "Name of logged in ID')
     app.exec_()
 
 

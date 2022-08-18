@@ -40,11 +40,12 @@ class TurnUpdate_Dialog(QDialog):
         self.updateButton.setEnabled(False)
         self.doneButton.setEnabled(False)
         self.update()
-        positions.load_from_site()
+        positions.load_from_site(self.progressBar)
         turns.load(self.progressBar)
-        self.updateButton.setEnabled(True)
+        #self.updateButton.setEnabled(True)
         self.doneButton.setEnabled(True)
-        self.progressBar.setProperty("value", 0)
+        self.progressBar.setRange(0, 1)
+        self.progressBar.setValue(1)
 
 
 ## Login button to convert passowrd to code/uid
@@ -125,8 +126,12 @@ class Options_Dialog(QDialog):
         self.comboBox.setGeometry(QtCore.QRect(130, 10, 140, 22))
 
         out = tree.Output('images/', 'blue', core.install_path())
+        index=0
         for k,v in enumerate(out.colour_scheme):
+            if core.data['colour']==v:
+                index=k
             self.comboBox.addItem(v)
+        self.comboBox.setCurrentIndex(index)
         self.comboBox.currentIndexChanged.connect(self.index_changed)
 
     def index_changed(self, index):

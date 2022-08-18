@@ -382,7 +382,7 @@ def sort_list(user_search,pos_flag=-1,filter_op=False):
 pos_list=[]
 last_error=''
 
-def load_from_site():
+def load_from_site(progress=None):
 	core.data['last_actions']['pos_list'] = status.current_day()
 	core.data['last_actions']['upload_time'] = int(time.time())
 	core.save()
@@ -396,20 +396,28 @@ def load_from_site():
 		except urllib.error.URLError as e:
 			last_error=e.reason
 		if xml_data!=None:
-			process_data(xml_data)
+			process_data(xml_data,progress)
 			return True
 	return False
 
-def process_data(xml_data):
+def process_data(xml_data,progress):
 	global pos_list
 	pos_list=[]
 	tree = et.parse(xml_data)
 	root = tree.getroot()
+
 	for child in root:
+		if progress:
+			progress.setRange(0, len(child))
+			progress.setProperty("value", 0)
+		cnt = 0
 		for data in child:
 			core.update_qt()
 			pos=Position(data,'xml')
 			pos_list.append(pos)
+			if progress:
+				cnt += 1
+				progress.setProperty("value", cnt)
 
 def load_from_db():
 	global pos_list
