@@ -61,6 +61,8 @@
 ; Section - Install App
 
   Section "-hidden app"
+    ;kill process
+    ExecWait "taskkill /f /IM ${APPFILE}"
     SectionIn RO
     SetOutPath "$INSTDIR"
     File /r "app\*.*" 
@@ -71,12 +73,14 @@
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${REG_DIR}" "DisplayIcon" '"$INSTDIR\${APPFILE}"'
 
     WriteUninstaller "$INSTDIR\Uninstall.exe"
+    Exec '"$INSTDIR\${APPFILE}"'
   SectionEnd
 
 ;--------------------------------
 ; Section - Uninstaller
 Section "Uninstall"
 
+  ExecWait "taskkill /f /IM ${APPFILE}"
   ;Delete Shortcut
   Delete "$DESKTOP\${NAME}.lnk"
 
