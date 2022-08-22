@@ -8,7 +8,7 @@
 ; Custom defines
   !define NAME "Phoenix_Turns"
   !define APPFILE "phoenix_turns.exe"
-  !define VERSION "0.1"
+  !define VERSION "0.1.1"
   !define SLUG "${NAME} v${VERSION}"
   !define REG_NAME "Skeletal\PhoenixTurns"
   !define REG_DIR "PhoenixTurns"

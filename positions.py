@@ -22,24 +22,34 @@ class Position:
 	POSITIONTYPE_OUTPOST = 0x08
 	POSITIONTYPE_CARGODUMP = 0x09
 	pos_types={	POSITIONTYPE_NONE:		'None',
-				POSITIONTYPE_GP:		'Gp',
+				POSITIONTYPE_GP:		'GP',
 				POSITIONTYPE_SHIP:		'Ship',
 				POSITIONTYPE_STARBASE:	'StarBase',
 				POSITIONTYPE_DEBRIS:	'Debris',
 				POSITIONTYPE_POLITICAL:	'Political',
 				POSITIONTYPE_PLATFORM:	'Platform',
 				POSITIONTYPE_AGENT:		'Agent',
-				POSITIONTYPE_OUTPOST:	'Output',
+				POSITIONTYPE_OUTPOST:	'Outpost',
 				POSITIONTYPE_CARGODUMP:	'Cagro Dump'}
+	pos_sort_order={	POSITIONTYPE_NONE:		0,
+						POSITIONTYPE_GP:		7,
+						POSITIONTYPE_SHIP:		1,
+						POSITIONTYPE_STARBASE:	3,
+						POSITIONTYPE_DEBRIS:	6,
+						POSITIONTYPE_POLITICAL:	8,
+						POSITIONTYPE_PLATFORM:	4,
+						POSITIONTYPE_AGENT:		5,
+						POSITIONTYPE_OUTPOST:	2,
+						POSITIONTYPE_CARGODUMP:	6}
 	reverse_pos_types={	'None':		POSITIONTYPE_NONE,
-						'Gp':		POSITIONTYPE_GP,
+						'GP':		POSITIONTYPE_GP,
 						'Ship':		POSITIONTYPE_SHIP,
 						'Starbase':	POSITIONTYPE_STARBASE,
 						'Debris':	POSITIONTYPE_DEBRIS,
 						'Political':POSITIONTYPE_POLITICAL,
 						'Platform':	POSITIONTYPE_PLATFORM,
 						'Agent':	POSITIONTYPE_AGENT,
-						'Output' :	POSITIONTYPE_OUTPOST,
+						'Outpost' :	POSITIONTYPE_OUTPOST,
 						'Cagro Dump':POSITIONTYPE_CARGODUMP}
 	# Positions search types
 	PST_POSITION = 0
@@ -47,29 +57,28 @@ class Position:
 	PST_NAME = 2
 	PST_NUMBER = 3
 	PST_LAST = 4
-	PST_TUS = 5
-	PST_INTEGRITY = 6
-	PST_RECREATION = 7
-	PST_SQUADRON = 8
-	PST_TUS_NO_ORDERS = 9
-	PST_DMG = 10
-	PST_TUS_ORDERS = 11
-	PST_DEAD_TURNS = 12
-
-	search_names={	PST_POSITION:"Positions",
-					PST_SYSTEM:"Systems",
-					PST_NAME:"Names",
-					PST_NUMBER:"Number",
-					PST_LAST:"Last Update",
-					PST_TUS:"Tus",
-					PST_INTEGRITY:"Integrity",
-					PST_RECREATION:"Recreation",
-					PST_SQUADRON:"Squadron",
-					PST_TUS_NO_ORDERS:"Tus/No Orders",
-					PST_DMG:"Damage",
-					PST_TUS_ORDERS:"Tus/Orders",
-					PST_DEAD_TURNS:"Not Implemented"}
+	PST_LAST_TURN = 5
+	PST_TUS = 6
+	PST_INTEGRITY = 7
+	PST_RECREATION = 8
+	PST_SQUADRON = 9
+	PST_TUS_NO_ORDERS = 10
+	PST_DMG = 11
+	PST_TUS_ORDERS = 12
 	## names
+	search_types = {PST_POSITION: 'Position Type',
+					PST_SYSTEM: 'System / Planet',
+					PST_NAME: 'Name',
+					PST_NUMBER: 'Number',
+					PST_LAST: 'Last Accessed',
+					PST_LAST_TURN: "Last Turn",
+					PST_TUS: 'Tus',
+					PST_TUS_NO_ORDERS: 'Tus and No Orders',
+					PST_TUS_ORDERS: 'Tus and Orders',
+					PST_INTEGRITY: 'Integrity',
+					PST_RECREATION: 'Recreation',
+					PST_SQUADRON: 'Squadron',
+					PST_DMG: 'Damage'}
 
 	def __getitem__(self, index):
 		return self.data[index]
@@ -77,20 +86,6 @@ class Position:
 		self.data[index]=item
 	def __contains__(self, item):
 		return item in self.data
-
-	search_types = {PST_POSITION: 'Position Type',
-					PST_SYSTEM: 'System / Planet',
-					PST_NAME: 'Name',
-					PST_NUMBER: 'Number',
-					PST_LAST: 'Last Accessed',
-					PST_TUS: 'Tus',
-					PST_TUS_NO_ORDERS: 'Tus and No Orders',
-					PST_TUS_ORDERS: 'Tus and Orders',
-					PST_INTEGRITY: 'Integrity',
-					PST_RECREATION: 'Recreation',
-					PST_SQUADRON: 'Squadron',
-					PST_DMG: 'Damage',
-					PST_DEAD_TURNS: 'Blocked with Error'}
 
 	def __init__(self,data,type='xml'):
 		if type=='xml':
@@ -156,7 +151,7 @@ class Position:
 		del self.data['num']
 
 	def last_turn(self):
-		if 'turns' in self.data and 0 in self.data['turns']:
+		if 'turns' in self.data and len(self.data['turns'])>0:
 			return self.data['turns'][0]
 		return 0
 
@@ -171,10 +166,10 @@ class Position:
 		cur = core.db().cursor()
 		#write position to db
 		if self.find() == None:
-			query = (self.data['id'], core.user_id(), self.data['name'],self.last_turn(), self.data['type_name'], self.data['system'],json.dumps(self.data))
+			query = (self.data['id'], core.user_id(), self.data['name'],self.last_turn(), self.data['type'], self.data['system'],json.dumps(self.data))
 			cur.execute("insert into positions values (?,?,?,?,?,?,?)", query)
 		else:
-			query = (self.last_turn(), self.data['type_name'], self.data['name'], self.data['system'], json.dumps(self.data),self.data['id'], core.user_id())
+			query = (self.data['name'],self.last_turn(),self.data['type'], self.data['system'], json.dumps(self.data),self.data['id'], core.user_id())
 			cur.execute("update positions SET name=?,last_turn=?,type=?,system=?,data=? where id=? and user_id=?",query)
 
 		#write positons turn to database if they are not already present
@@ -243,7 +238,7 @@ class Position:
 		self['cat_id']=0
 		# simple convertions
 		if user_search==Position.PST_POSITION:
-			self.sort = self['type_name']
+			self.sort = Position.pos_sort_order[self['type']]
 			self['cat_id']=self['type']
 		elif user_search == Position.PST_SYSTEM:
 			self.sort=self['system']
@@ -261,15 +256,18 @@ class Position:
 				res = re.match(".*\\((\\d+)\\)", self['squadron'])
 				if res != None:
 					self['cat_id'] = int(res.groups(0)[0])
-		elif user_search == Position.PST_DEAD_TURNS:
-			self.sort='Not implemented'
 		cat_name=self.sort
 
 		# differnt cat names + quantisation of sort
-		if user_search == Position.PST_LAST:
+		if user_search == Position.PST_POSITION:
+			cat_name =self['type_name']
+		if user_search == Position.PST_LAST or user_search == Position.PST_LAST_TURN:
 			last=0
-			if 'day' in self['loc_info']:
-				last = int(self['loc_info']['day'])
+			if user_search == Position.PST_LAST:
+				if 'day' in self['loc_info']:
+					last = int(self['loc_info']['day'])
+			else:
+				last=self.last_turn()
 			self.sort=last
 			self['cat_id'] = last
 			cat_name =core.date(last,True)
@@ -375,7 +373,8 @@ def sort_list(user_search,pos_flag=-1,filter_op=False):
 	reverse = False
 	if 	user_search==Position.PST_RECREATION or user_search==Position.PST_TUS_NO_ORDERS or \
 		user_search==Position.PST_LAST or user_search==Position.PST_TUS_ORDERS or \
-		user_search==Position.PST_TUS or user_search==Position.PST_DMG:
+		user_search==Position.PST_TUS or user_search==Position.PST_DMG or \
+		user_search==Position.PST_LAST_TURN:
 		reverse=True
 	pos_list.sort(key=lambda x: (x.sort,x.data['type_name'],x.data['name']), reverse=reverse)
 
@@ -469,7 +468,7 @@ def create_index_page():
 			on='none'
 	out.add("</div>\n")
 	out.add("<div id='right_panel'>\n")
-	out.add("<iframe width='100%' frameborder=0 id='turn_frame' src = '' onload='javascript:frame_load(this)'> </iframe>")
+	out.add("<iframe width='100%' frameborder=0 id='turn_frame' src = ''> </iframe>")
 	out.add("</div>\n")
 	out.add("</div>\n")
 	f = open(core.data_path() + 'index.html', 'w')

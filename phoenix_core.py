@@ -12,7 +12,7 @@ import winreg
 import time
 
 
-version=0.0
+version=0.1
 last_error=''
 data=None
 class phoenix_core_wrapper:
