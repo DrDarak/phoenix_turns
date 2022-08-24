@@ -51,7 +51,7 @@ phoenix_turns---config.json  <-- used for online xml codes and other config
 <li>pip install requests
 <li>pip install pyqt5
 <li>pip install pyinstaller
-<li>pip install nx_freeze
+<li>pip install cx_Freeze
 <li>NullScript Scriptable Install System (NSIS)
 </ul>
 
