@@ -10,6 +10,7 @@ from PyQt5 import QtWidgets, QtCore
 from distutils.dir_util import copy_tree
 import winreg
 import time
+import shutil
 
 
 version=0.1
@@ -46,11 +47,18 @@ class phoenix_core_wrapper:
         self.db_name = self.target_path + 'phoenix.db'
         self.db_con=sql.connect(self.db_name,isolation_level='EXCLUSIVE')
         self.use_qt=False
+        self.copy_js('tree.js')
+        self.copy_js('phoenix.js')
+
         # setup data held by core
         self.load()
         self.create_db()  # after load()
         self.update_data()
         self.set_colour()
+
+    def copy_js(self,file):
+        if not os.path.exists(self.target_path + file):
+            shutil.copy2(self.install_path+file,self.target_path )
 
     def set_colour(self):
         global data
