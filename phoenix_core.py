@@ -79,6 +79,7 @@ class phoenix_core_wrapper:
         cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name text)')
         cur.execute('CREATE TABLE IF NOT EXISTS positions (id INTEGER, user_id INTEGER,name Text, last_turn INTEGER,type Text,system Text,data TEXT)')
         cur.execute('CREATE TABLE IF NOT EXISTS turns (pos_id INTEGER,file_name TEXT, user_id INTEGER,day INTEGER,downloaded INTEGER)')
+        cur.execute('CREATE TABLE IF NOT EXISTS officers (id INTEGER PRIMARY KEY, pos_id INTEGER, user_id INTEGER, xp INTEGER, data TEXT)')
         self.update_users()
 
     def update_users(self):

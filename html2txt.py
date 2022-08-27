@@ -2,15 +2,9 @@ from html.parser import HTMLParser
 import os
 import re
 
-current_path = os.path.dirname(os.path.realpath(__file__))
-target_path = current_path + '/data/12345.html'
-read_data=''
-with open(target_path) as f:
-    read_data = f.read()
-    f.close()
 max_line_length=80
 
-class MyHTMLParser(HTMLParser):
+class HTML_to_Txt(HTMLParser):
     def __init__(self):
         super().__init__()
         self.in_body=False
@@ -232,6 +226,20 @@ class MyHTMLParser(HTMLParser):
         add_data += "|"
         return add_data
 
+class HTML_to_RawTxt(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.output=''
+    def handle_data(self, data):
+        data = str(data.replace("\n", ""))
+        if len(data)>0:
+            self.output+=data
+            if data[-1]!=" ":
+                self.output+=" "
+    def handle_endtag(self, tag):
+        if tag == 'body':
+            pass
+
 def cut_column(col,max_length):
     while len(col)>max_length:
         for i in range(max_length,0,-1):
@@ -253,10 +261,31 @@ def break_line(line):
     output += line
     return output
 
-#<b>
-#<u>
+def turn_to_raw_txt(read_data):
+    parser = HTML_to_RawTxt()
+    parser.feed(read_data)
+    return parser.output
+
 if __name__ == '__main__':
-    parser = MyHTMLParser()
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    target_path = current_path + '/data/12345.html'
+    read_data = ''
+    with open(target_path) as f:
+        read_data = f.read()
+        f.close()
+
+    parser = HTML_to_RawTxt()
     parser.feed(read_data)
     print(parser.output)
+    f = open('./data/tmp.txt', 'w')
+    f.write(parser.output)
+    f.close()
+
+    res = re.search(r"OFFICERS(.*?)(CREW|Cargo Report|Inventory|SCIENTISTS)",parser.output,re.MULTILINE)
+    if res != None:
+        data=res.groups(0)[0]
+        print(res.groups(0))
+        res =re.findall(r"1 ([^{]*){([^}]*)",data)
+        #strip
+        print(res)
 
