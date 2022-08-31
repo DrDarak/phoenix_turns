@@ -13,7 +13,7 @@ import time
 import shutil
 
 
-version=0.1
+version=0.2
 last_error=''
 data=None
 class phoenix_core_wrapper:
@@ -80,6 +80,7 @@ class phoenix_core_wrapper:
         cur.execute('CREATE TABLE IF NOT EXISTS positions (id INTEGER, user_id INTEGER,name Text, last_turn INTEGER,type Text,system Text,data TEXT)')
         cur.execute('CREATE TABLE IF NOT EXISTS turns (pos_id INTEGER,file_name TEXT, user_id INTEGER,day INTEGER,downloaded INTEGER)')
         cur.execute('CREATE TABLE IF NOT EXISTS officers (id INTEGER PRIMARY KEY, pos_id INTEGER, user_id INTEGER, xp INTEGER, data TEXT)')
+        self.db_con.commit()
         self.update_users()
 
     def update_users(self):
@@ -106,8 +107,10 @@ class phoenix_core_wrapper:
         if float(data['version'])>=version:
             return
         # do version changes
-
-
+        cur = self.db_con.cursor()
+        if float(data['version'])<0.2:
+            cur.execute("ALTER TABLE turns ADD COLUMN data TEXT NOT NULL DEFAULT ''")
+        self.db_con.commit()
         # save
         data['version']=version
         self.save()
