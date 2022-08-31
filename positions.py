@@ -222,54 +222,54 @@ class Position:
 	def sort_data(self,user_search):
 		day=status.current_day()
 		tus=self.current_tus()
-		if self['type']!=Position.POSITIONTYPE_GP and self['type']!=Position.POSITIONTYPE_SHIP:
+		if self.data['type']!=Position.POSITIONTYPE_GP and self.data['type']!=Position.POSITIONTYPE_SHIP:
 			tus=-300
 		integrity=200.0
-		if 'int' in self['loc_info']:
-			integrity=float(self['loc_info']['int'])
+		if 'int' in self.data['loc_info']:
+			integrity=float(self.data['loc_info']['int'])
 		rec =-10
-		if 'rec' in self['loc_info']:
-			rec =(day-int(self['loc_info']['rec']))/5
+		if 'rec' in self.data['loc_info']:
+			rec =(day-int(self.data['loc_info']['rec']))/5
 		orders=False
-		if 'orders' in self and self['orders']!='false':
+		if 'orders' in self and self.data['orders']!='false':
 			orders=True
 		# set sort
 		self.sort = ''
-		self['cat_id']=0
+		self.data['cat_id']=0
 		# simple convertions
 		if user_search==Position.PST_POSITION:
-			self.sort = Position.pos_sort_order[self['type']]
-			self['cat_id']=self['type']
+			self.sort = Position.pos_sort_order[self.data['type']]
+			self.data['cat_id']=self.data['type']
 		elif user_search == Position.PST_SYSTEM:
-			self.sort=self['system']
-			res = re.match(".*\\((\\d+)\\)",self['system'])
+			self.sort=self.data['system']
+			res = re.match(".*\\((\\d+)\\)",self.data['system'])
 			if res != None:
-				self['cat_id'] =int(res.groups(0)[0])
+				self.data['cat_id'] =int(res.groups(0)[0])
 		elif user_search == Position.PST_NAME:
-			self.sort=self['name']
+			self.sort=self.data['name']
 		elif user_search == Position.PST_NUMBER:
-			self.sort=self['id']
+			self.sort=self.data['id']
 		elif user_search == Position.PST_SQUADRON:
 			self.sort = 'No Squadron'
 			if 'squadron' in self:
-				self.sort=self['squadron']
-				res = re.match(".*\\((\\d+)\\)", self['squadron'])
+				self.sort=self.data['squadron']
+				res = re.match(".*\\((\\d+)\\)", self.data['squadron'])
 				if res != None:
-					self['cat_id'] = int(res.groups(0)[0])
+					self.data['cat_id'] = int(res.groups(0)[0])
 		cat_name=self.sort
 
 		# differnt cat names + quantisation of sort
 		if user_search == Position.PST_POSITION:
-			cat_name =self['type_name']
+			cat_name =self.data['type_name']
 		if user_search == Position.PST_LAST or user_search == Position.PST_LAST_TURN:
 			last=0
 			if user_search == Position.PST_LAST:
-				if 'day' in self['loc_info']:
-					last = int(self['loc_info']['day'])
+				if 'day' in self.data['loc_info']:
+					last = int(self.data['loc_info']['day'])
 			else:
 				last=self.last_turn()
 			self.sort=last
-			self['cat_id'] = last
+			self.data['cat_id'] = last
 			cat_name =core.date(last,True)
 		if user_search == Position.PST_NAME or user_search == Position.PST_NUMBER:
 			cat_name='Positions'
@@ -293,11 +293,11 @@ class Position:
 					cat_name+='300 Tus'
 				else:
 					cat_name+=str(self.sort+30)+' Tus'
-			self['cat_id'] = self.sort
+			self.data['cat_id'] = self.sort
 		if user_search == Position.PST_DMG:
 			dmg =0.0
-			if 'ship_info' in self and 'dmg' in self['ship_info']:
-				res = re.match("(\\d+\\.?\\d+)%", self['ship_info']['dmg'])
+			if 'ship_info' in self and 'dmg' in self.data['ship_info']:
+				res = re.match("(\\d+\\.?\\d+)%", self.data['ship_info']['dmg'])
 				if res != None:
 					dmg  = float(res.groups(0)[0])
 			if dmg == 0.0:
@@ -313,7 +313,7 @@ class Position:
 					cat_name+=str(dmg+10)+'%'
 				cat_name+= " Damage"
 			self.sort=dmg
-			self['cat_id'] = int(dmg)
+			self.data['cat_id'] = int(dmg)
 		if user_search == Position.PST_INTEGRITY:
 			if integrity == 0.0:
 				cat_name = '0%'
@@ -328,7 +328,7 @@ class Position:
 					cat_name += str(integrity + 10) + '%'
 				cat_name += " Integrity"
 			self.sort=integrity
-			self['cat_id'] = int(integrity)
+			self.data['cat_id'] = int(integrity)
 		if user_search == Position.PST_RECREATION:
 			if rec == -10:
 				cat_name = 'Recreation not used'
@@ -336,9 +336,9 @@ class Position:
 				rec = 10 * (int)(rec / 10)
 				cat_name =str(rec)+" <img src='images/r_arr.gif'/> "+str(rec+10)+' Weeks'
 			self.sort=int(rec)
-			self['cat_id'] = int(rec)
+			self.data['cat_id'] = int(rec)
 		if 'ext_name' not in self:
-			self['ext_name']=self['name']+" ("+str(self['id'])+")"
+			self.data['ext_name']=self.data['name']+" ("+str(self.data['id'])+")"
 		return cat_name
 
 
