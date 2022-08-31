@@ -183,7 +183,7 @@ class Position:
 				turns[turn[0]]=1
 			for turn_day in self.data['turns']:
 				if turn_day not in turns:
-					cur.execute("insert into turns values (?,?,?,?,?)", (self.data['id'],self.data['name'],core.user_id(),turn_day,0))
+					cur.execute("insert into turns values (?,?,?,?,?,?)", (self.data['id'],self.data['name'],core.user_id(),turn_day,0,''))
 		core.db().commit()
 
 	def current_tus(self):
