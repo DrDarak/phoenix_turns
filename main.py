@@ -21,6 +21,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.show_turns.triggered.connect(self.show_turns_window)
         self.show_turns.setIcon(QtGui.QIcon(core.install_path()+"phoenix_32x32.png"))
 
+        self.show_turns = self.menu.addAction("Show Searches")
+        self.show_turns.triggered.connect(self.show_search_window)
+        self.show_turns.setIcon(QtGui.QIcon(core.install_path()+"phoenix_32x32.png"))
+
         self.separator_1 = self.menu.addSeparator()
 
         ## add user list
@@ -36,6 +40,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.update_turns = self.menu.addAction("Update Turns")
         self.update_turns.triggered.connect(self.update_turns_window)
         self.update_turns.setIcon(QtGui.QIcon(core.install_path()+"phoenix_32x32.png"))
+
+        self.search_action = self.menu.addAction("Search Turns")
+        self.search_action.triggered.connect(self.search_window)
 
         self.options_action = self.menu.addAction("Options")
         self.options_action.triggered.connect(self.options_window)
@@ -75,6 +82,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         turns.update()
         self.setToolTip(f'Phoenix Turn Downloader')
 
+    def search_window(self):
+        dlg =Search_Dialog()
+        dlg.exec_()
+
     def onTrayIconActivated(self, reason):
         if reason == self.DoubleClick:
             self.show_turns_window()
@@ -87,7 +98,6 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def options_window(self):
         dlg =Options_Dialog()
         dlg.exec_()
-        pass
 
     def login_window(self):
         if self.running_login == True:
@@ -123,6 +133,11 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def show_turns_window(self):
         positions.create_index_page()
         webbrowser.open(core.data_path()+'index.html')
+
+    def show_search_window(self):
+        positions.create_search_page()
+        webbrowser.open(core.data_path() + 'search.html')
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)

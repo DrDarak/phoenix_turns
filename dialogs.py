@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QDialog, QPushButton,QProgressBar,QLabel,QLineEdit,QMessageBox,QComboBox
+from PyQt5.QtWidgets import QDialog, QPushButton,QProgressBar,QLabel,QLineEdit,QMessageBox,QComboBox,QListWidget,QListWidgetItem,QTableWidget,QTableWidgetItem
+from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem,QHeaderView
 from PyQt5 import QtCore,QtGui
 import turns
 from threading import Thread
@@ -138,3 +139,71 @@ class Options_Dialog(QDialog):
     def index_changed(self, index):
         colour=self.comboBox.currentText()
         core.set_colour(colour)
+
+## Login button to convert passowrd to code/uid
+class Search_Dialog(QDialog):
+    def __init__(self,parent=None):
+        super().__init__(parent)
+
+        self.setWindowIcon(QtGui.QIcon("phoenix_32x32.png"))
+        self.setModal(True)
+        self.setWindowTitle("Search Options")
+        self.setFixedSize(320, 379)
+
+        self.tableWidget = QTableWidget(self)
+        self.tableWidget.setColumnCount(2)
+        self.tableWidget.setRowCount(10)
+        # Add headers
+        header= QTableWidgetItem()
+        header.setText("Search Terms")
+        self.tableWidget.setHorizontalHeaderItem(0,header)
+        header= QTableWidgetItem()
+        header.setText("Limit")
+        self.tableWidget.setHorizontalHeaderItem(1,header)
+        #fill in table for searches
+        for i in range(0,9):
+            s=str(i)
+            item = QTableWidgetItem()
+            item.setText(str(i+1))
+            self.tableWidget.setVerticalHeaderItem(i, item)
+            limit='100'
+            if s in core.data["search"]:
+                item = QTableWidgetItem()
+                item.setText(core.data["search"][s]['text'])
+                self.tableWidget.setItem(i, 0, item)
+                limit=core.data["search"][s]['limit']
+            item = QTableWidgetItem()
+            item.setText(str(limit))
+            self.tableWidget.setItem(i,1, item)
+
+        self.tableWidget.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(1,QHeaderView.ResizeToContents)
+        self.tableWidget.setObjectName(u"tableWidget")
+        self.tableWidget.setGeometry(QtCore.QRect(10, 10, 300, 326))
+        self.tableWidget.itemChanged.connect(self.edit_search)
+
+        self.login_button = QPushButton(self)
+        self.login_button.setObjectName(u"test_search")
+        self.login_button.setGeometry(QtCore.QRect(10, 346, 81, 23))
+        self.login_button.setText("Test Search")
+        self.login_button.clicked.connect(self.run_search)
+
+        self.cancel_button = QPushButton(self)
+        self.cancel_button.setObjectName(u"cancel_button")
+        self.cancel_button.setGeometry(QtCore.QRect(229, 346, 81, 23))
+        self.cancel_button.setText(u"Done")
+        self.cancel_button.clicked.connect(self.reject)
+
+    def edit_search(self,item):
+        r=str(item.row())
+        if r not in core.data["search"]:
+            core.data["search"][r] = {'text': '', 'limit': '100'}
+        if item.column()==0:
+            core.data["search"][r]['text']=item.data(0)
+        else:
+            core.data["search"][r]['limit']=item.data(0)
+        core.save()
+    def run_search(self):
+        positions.create_search_page()
+
+

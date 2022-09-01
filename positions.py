@@ -341,11 +341,7 @@ class Position:
 			self.data['ext_name']=self.data['name']+" ("+str(self.data['id'])+")"
 		return cat_name
 
-
-collasped_cats={}
-cat_list={}
 def sort_list(user_search,pos_flag=-1,filter_op=False):
-	global cat_list
 	type_cnt = {}
 	cat_list = {}
 	for pos in pos_list:
@@ -366,7 +362,6 @@ def sort_list(user_search,pos_flag=-1,filter_op=False):
 	if len(cat_list)==0:
 		cat_list={0:"Positions"}
 	# create collasped list
-	global collasped_cats
 	collasped_cats={}
 	for i, (k,v) in enumerate(type_cnt.items()):
 		collasped_cats[k]=str(v) + ' Positions'
@@ -377,6 +372,7 @@ def sort_list(user_search,pos_flag=-1,filter_op=False):
 		user_search==Position.PST_LAST_TURN:
 		reverse=True
 	pos_list.sort(key=lambda x: (x.sort,x.data['type_name'],x.data['name']), reverse=reverse)
+	return (cat_list,collasped_cats)
 
 pos_list=[]
 last_error=''
@@ -432,11 +428,7 @@ def create_html_data():
 	for pos in pos_list:
 		pos.create_html_data()
 
-def create_index_page():
-	global pos_list,collasped_list
-	if status.reload_positions():
-		load_from_site()
-
+def create_output():
 	# setup output class
 	out = tree.Output('images/',core.data['colour'],core.install_path())
 	out.add_script_file('./tree.js')
@@ -444,25 +436,49 @@ def create_index_page():
 	out.add_css_file('./tree.css')
 	out.add_css_file('./main.css')
 	out.add_css_file('./turns.css')
-	out.title = "Phoenix Turns"
+
+def create_index_page():
+	if status.reload_positions():
+		load_from_site()
+	create_html_data()  # create html sections for postions in list
+	data_trees=[]
+	for i,(k,v) in enumerate(Position.search_types.items()):
+		data_trees.append(construct_tree(int(k)))
+	create_positions_page(data_trees,Position.search_types, 'index.html',"Phoenix Turns")
+
+def construct_tree(user_search=Position.PST_POSITION):
+	global pos_list
+	(cat_list,collasped_cats)=sort_list(user_search)
+	t = tree.TreeControl(True, False)
+	t.setup(core.data['colour'], 160, user_search, 'std', True)
+	return t.create(pos_list,cat_list, collasped_cats, closed_list=[])
+
+def create_positions_page(data_trees,search_types,file_name,title):
+	# setup output class
+	out = tree.Output('images/',core.data['colour'],core.install_path())
+	out.add_script_file('./tree.js')
+	out.add_script_file('./phoenix.js')
+	out.add_css_file('./tree.css')
+	out.add_css_file('./main.css')
+	out.add_css_file('./turns.css')
+	out.title = title
 
 	# add tabs
 	out.add("<div class='main'>\n")
 	out.add("<div id='left_panel'>\n")
 	out.add("<div class='search_tabs'>\n")
 	on = ' on'
-	for i, (k, v) in enumerate(Position.search_types.items()):
+	for i, (k, v) in enumerate(search_types.items()):
 		out.add("<div id='search_tab_"+str(k)+"' class='search_tab"+on+"' onmouseup='activate_tab("+str(k)+")'>"+v+"</div>\n")
 		if i == 0:
 			on=''
 	out.add("</div><div style='height:5px;'></div>\n")
 
 	# render trees
-	create_html_data() # create html sections for postions in list
 	on = ''
-	for i,(k,v) in enumerate(Position.search_types.items()):
+	for i,(k,v) in enumerate(search_types.items()):
 		out.add("<div id='data_"+str(k)+"' style='display:"+on+"' class='search_data'>\n")
-		construct_tree(out,int(k))
+		out.add(data_trees[i])
 		out.add("</div>\n")
 		if i == 0:
 			on='none'
@@ -471,20 +487,57 @@ def create_index_page():
 	out.add("<iframe width='100%' frameborder=0 id='turn_frame' src = ''> </iframe>")
 	out.add("</div>\n")
 	out.add("</div>\n")
-	f = open(core.data_path() + 'index.html', 'w')
+	f = open(core.data_path() + file_name, 'w')
 	f.write(out.html())
 	f.close()
 
-def construct_tree(out,user_search=Position.PST_POSITION):
-	sort_list(user_search)
+def create_search_page():
+	data_trees = []
+	search_types={}
+	for i in range(0,9):
+		si=str(i)
+		if si in core.data['search'] and len(core.data['search'][si]['text'])>2:
+			search_types[si]=core.data['search'][si]['text']
+			data_trees.append(search_positions(search_types[si],core.data['search'][si]['limit'],i))
+	create_positions_page(data_trees,search_types,'search.html',"Searched Phoenix Turns")
+
+def search_positions(search_txt,limit,sort_id):
+	cur = core.db().cursor()
+	cur.execute("select file_name,pos_id,day from turns where user_id=? and downloaded=? and data like ? order by day desc,file_name limit ?",(core.user_id(), 1, '%'+search_txt+'%',limit))
+	create_html_data()  # create html sections for postions in list
+	turn_list = cur.fetchall()
+	## do conversion
+	list=[]
+	type_cnt = {}
+	cat_list = {}
+	for turn in turn_list:
+		pos={}
+		pos['id']=int(turn[1])
+		pos['name']=turn[0]
+		pos['cat_id']=int(turn[2])
+		cat_name = core.date(pos['cat_id'], True)
+		pos['ext_name'] = "<a href='javascript:display_turn(\"" + core.turn_path(pos['name'], pos['id'], pos['cat_id'], True) + "\")'>"\
+						  + pos['name'] + " (" + str(pos['id']) + ")</a>"
+		list.append(pos)
+		if pos['cat_id'] not in cat_list:
+			cat_list[pos['cat_id']]=cat_name
+		if pos['cat_id'] not in type_cnt:
+			type_cnt[pos['cat_id']]=0
+		type_cnt[pos['cat_id']]+=1
+
+	collasped_cats={}
+	for i, (k,v) in enumerate(type_cnt.items()):
+		collasped_cats[k]=str(v) + ' Positions'
+
 	t = tree.TreeControl(True, False)
-	t.setup(core.data['colour'], 160, user_search, 'std', True)
-	body = t.create(pos_list,cat_list, collasped_cats, closed_list=[])
-	out.add(body)
+	t.setup(core.data['colour'], 160, sort_id, 'std', False)
+	return t.create(list,cat_list, collasped_cats, closed_list=[])
 
 if __name__ == '__main__':
-	load_from_site()
-	create_index_page()
+	#load_from_site()
+	#create_index_page()
+	load_from_db()
+	create_search_page()
 else:
 	load_from_db()
 

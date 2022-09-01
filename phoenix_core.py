@@ -13,7 +13,7 @@ import time
 import shutil
 
 
-version=0.2
+version=0.3
 last_error=''
 data=None
 class phoenix_core_wrapper:
@@ -129,6 +129,8 @@ class phoenix_core_wrapper:
             if 'year_start' not in data:
                 data['year_start'] = [0, 265, 525, 785, 1045, 1305, 1565, 1830, 2090, 2350, 2615, 2875, 3135, 3395,
                                       3655, 3920, 4180, 4440, 4700, 4965, 5225]
+            if 'search' not in data:
+                data['search'] = {}
             if 'users' not in data:
                 data['users'] = {}
             if 'current_user' not in data:
