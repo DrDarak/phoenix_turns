@@ -24,7 +24,7 @@ build_exe_options = {"excludes": ["tkinter"], # need to exclude a lot
 base='Win32GUI'
 setup(
     name="Phoenix_Turns",
-    version="0.2",
+    version="0.3",
     description="Phoenix BSE Turn Downloader",
     options={"build_exe":  build_exe_options},
     executables=[Executable("main.py",
