@@ -25,6 +25,7 @@ class TreeControl:
 		self.t_d_s="class='t_d_s'"
 		self.t_c_n="class='t_c_n'"
 		self.t_d_n_collaspsed="class='t_d_n'"
+		self.t_d_n = "class='t_d_n'"
 		self.t_data_style="margin-left:"+str(width)+"px;"
 		self.cat_expander="images/neg.gif"
 
@@ -33,6 +34,7 @@ class TreeControl:
 			self.t_d_s="class='t_d_sc'"
 			self.t_c_n+=" style='float:right;margin-right:4px;'"
 			self.t_d_n_collaspsed="class='t_d_n2'"
+			self.t_d_n = "class='t_d_n2'"
 		self.t_cat+=" style='width:"+str(width)+"px'"
 		self.t_c_x="class='t_d_x'"
 
@@ -97,9 +99,9 @@ class TreeControl:
 				name = data['ext_name']
 			if self.use_desc:
 				s+="			<img class='t_d_xl' onclick='tree_toggle_data(this,"+str(data['id'])+","+str(self.id)+")' src='"+expander+"'/>\n"\
-					"			<div class='t_d_n'>"+name+"</div>\n"
+					"			<div "+self.t_d_n+">"+name+"</div>\n"
 			else:
-				s+="			<div class='t_d_n2'>"+name+"</div>\n"
+				s+="			<div "+self.t_d_n+">"+name+"</div>\n"
 			s+="		</div>\n"
 			## insert description if used
 			if self.use_desc and 'html' in data:
