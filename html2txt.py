@@ -73,10 +73,9 @@ class HTML_to_Txt(HTMLParser):
 
     ## render until every row has been done
     def render_row(self):
-        first_pass=True
-        while len(self.col_data)>0:
-            self.render_single_row(first_pass)
-            first_pass = False
+        i=0
+        while len(self.col_data)>0 and i<100:
+            self.render_single_row((i==0))
 
     def render_single_row(self,first_pass):
         ## cuts columns that are too long
@@ -128,7 +127,12 @@ class HTML_to_Txt(HTMLParser):
             add_widths=[]
             failed = False
             for i in range(0, size):
-                add_widths.append(1 + r*(i == 0) * 3 + r*(i == (size - 1)))
+                content=1 ## if there is content add 1 space
+                ## account for blank zero length column
+                if self.row_cols[i]==0 and self.col_data[i].trim().length==0:
+                    self.col_data[i]=''
+                    content=0
+                add_widths.append(content + r*(i == 0) * 3 + r*(i == (size - 1)))
                 widths.append(len(self.col_data[i])+add_widths[i])
             for i in range(0, size):
                 too_big=(widths[i] > self.row_cols[i])
@@ -220,9 +224,8 @@ class HTML_to_Txt(HTMLParser):
 
     def complete_report(self):
         add_data=''
-        if self.line_pos < max_line_length:
-            for i in range(self.line_pos, max_line_length-1):
-                add_data += " "
+        for i in range(self.line_pos, max_line_length-1):
+            add_data += " "
         add_data += "|"
         return add_data
 
@@ -241,7 +244,7 @@ class HTML_to_RawTxt(HTMLParser):
             pass
 
 def cut_column(col,max_length):
-    while len(col)>max_length:
+    if (len(col)>max_length):
         for i in range(max_length,0,-1):
             if col[i] == ':' or col[i] == ';' or col[i] == '.' or col[i] == ',' or col[i] == ' ':
                 i+=1
@@ -274,7 +277,7 @@ if __name__ == '__main__':
         read_data = f.read()
         f.close()
 
-    parser = HTML_to_RawTxt()
+    parser = HTML_to_Txt()
     parser.feed(read_data)
     print(parser.output)
     f = open('./data/tmp.txt', 'w')
